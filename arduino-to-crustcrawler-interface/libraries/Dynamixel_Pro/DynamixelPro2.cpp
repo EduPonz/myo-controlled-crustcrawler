@@ -69,7 +69,21 @@ void DynamixelPro2::move_down() {
 }
 
 void DynamixelPro2::use_gripper(){
-	// TO-DO!!
+	int pos[2];
+
+	pos[0] = this->read_current_position(3);		// Reads the position of servo 4 
+	pos[1] = this->read_current_position(4);		// Reads the position of servo 5
+
+	if (pos[0] == 3072 || pos[1] == 1024) {
+		pos[0] = 2048;
+		pos[1] = 2048;
+	}else {
+		pos[0] = 3072;
+		pos[1] = 1024;
+	}
+
+	this->write_goal_position(3, pos[0]);
+	this->write_goal_position(4, pos[1]);
 }
 
 void DynamixelPro2::write_holding_torque() {
