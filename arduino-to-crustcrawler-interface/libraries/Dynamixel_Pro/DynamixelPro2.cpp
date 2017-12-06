@@ -74,12 +74,12 @@ void DynamixelPro2::use_gripper(){
 	pos[0] = this->read_current_position(3);		// Reads the position of servo 4 
 	pos[1] = this->read_current_position(4);		// Reads the position of servo 5
 
-	if (pos[0] == 3072 || pos[1] == 1024) {
-		pos[0] = 2048;
-		pos[1] = 2048;
+	if (pos[0] == _GRIPPER_OPEN[0] || pos[1] == _GRIPPER_OPEN[1]) {
+		pos[0] = _GRIPPER_CLOSE[0];
+		pos[1] = _GRIPPER_CLOSE[1];
 	}else {
-		pos[0] = 3072;
-		pos[1] = 1024;
+		pos[0] = _GRIPPER_OPEN[0];
+		pos[1] = _GRIPPER_OPEN[1];
 	}
 
 	this->write_goal_position(3, pos[0]);
