@@ -135,7 +135,7 @@ String DynamixelPro2::get_instruction(int mode, String gesture){
 void DynamixelPro2::_write_to_servo_id(int servo_id, unsigned short addr, unsigned char *arr, int n) {
 
 	n += 5;													// This skips the first 5 bits
-	unsigned char ID = this->_servo_HEX_id[servo_id - 1];
+	unsigned char ID = this->_SERVO_HEX_ID[servo_id];
 
 	this->_instruction_packet_array[0] = servo_id;
 	this->_instruction_packet_array[1] = (n & 0xFF);				//length
@@ -156,7 +156,7 @@ void DynamixelPro2::_write_to_servo_id(int servo_id, unsigned short addr, unsign
 void DynamixelPro2::write_goal_position(int servo_id, unsigned int pos) {
 
 	pos %= 4096;
-	unsigned char ID = this->_servo_HEX_id[servo_id - 1];
+	unsigned char ID = this->_SERVO_HEX_ID[servo_id];
 
 	unsigned char arr[] = {
 		(pos & 0xFF),
@@ -171,7 +171,7 @@ void DynamixelPro2::write_goal_position(int servo_id, unsigned int pos) {
 
 int DynamixelPro2::read_current_position(int servo_id) {
 
-	unsigned char ID = this->_servo_HEX_id[servo_id - 1];
+	unsigned char ID = this->_SERVO_HEX_ID[servo_id];
 
 	this->_clear_RX_buffer();
 	this->_read_from_servo_id(ID, 0x84, 4);			//Read from adress 0x84 (Present Position), byte size 4
@@ -184,7 +184,7 @@ int DynamixelPro2::read_current_position(int servo_id) {
 
 int DynamixelPro2::read_current_velocity(int servo_id) {
 
-	unsigned char ID = this->_servo_HEX_id[servo_id - 1];
+	unsigned char ID = this->_SERVO_HEX_ID[servo_id];
 
 	this->_clear_RX_buffer();
 	this->_read_from_servo_id(ID, 0x80, 4);				//Read from adress 0x80 (Present Velocity), byte size 4
