@@ -55,17 +55,19 @@ class DynamixelPro2 {
 		unsigned short _update_crc(unsigned char *data_blk_ptr, unsigned short data_blk_size);
 		void _mode_switch(int mode);
 		
+		const int _GRIPPER_OPEN[2] = {3072, 1024};
+		const int _GRIPPER_CLOSE[2] = {2048, 2048};
 		const String _FIST = "fist";
 		const String _FINGERS_SPREAD = "fingersSpread";
 		const String _WAVE_IN = "waveIn";
 		const String _WAVE_OUT = "waveOut";
+		const unsigned char _servo_HEX_id[5] = {0x01, 0x02, 0x03, 0x04, 0x05};	// Array to hold servo id's in HEX form
 
 		char _direction_pin;									// Pin to control TX/RX buffer chip
 		unsigned int _data[15];									// Data from ReturnPacket
 		unsigned int _return_packet[100];						// Array to hold returned status packet data
 		unsigned char _instruction_packet_array[64];			// Array to hold instruction packet data
 		unsigned char _status_return_value;						// Status packet return states ( NON , READ , ALL )	
-		unsigned char _servo_HEX_id[5] = {0x01, 0x02, 0x03, 0x04, 0x05};	// Array to hold servo id's in HEX form
 
 };
 
