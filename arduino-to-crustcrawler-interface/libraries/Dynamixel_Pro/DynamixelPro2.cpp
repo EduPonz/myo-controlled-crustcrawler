@@ -6,9 +6,6 @@ Author:		Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo 
 
 #include "DynamixelPro2.h"
 
-DynamixelPro2::DynamixelPro2(){}
-
-
 void DynamixelPro2::begin(long baud) {
 
 #if defined(__AVR_ATmega32U4__) || defined(__MK20DX128__) || defined(__AVR_ATmega2560__)
@@ -53,8 +50,7 @@ void DynamixelPro2::move_up() {
 	if (Pos3 <= 2022) {
 		Pos3 = Pos3 + 90;
 		this->write_goal_position(0x02, Pos3);
-	}
-	else {
+	}else {
 		Pos3 = Pos3 - 90;
 		this->write_goal_position(0x02, Pos3);
 	}
@@ -66,39 +62,21 @@ void DynamixelPro2::move_down() {
 	if (Pos3 <= 2022) {
 		Pos3 = Pos3 - 90;
 		this->write_goal_position(0x02, Pos3);
-	}
-	else {
+	}else {
 		Pos3 = Pos3 + 90;
 		this->write_goal_position(0x02, Pos3);
 	}
 }
 
-
-void DynamixelPro2::use_gripper() {
-
-	int pos[2];
-
-	pos[0] = this->read_current_position(3);
-	pos[1] = this->read_current_position(4);
-
-	if (pos[0] == 3072 || pos[1] == 1024) {
-		pos[0] = 2048;
-		pos[1] = 2048;
-	}else {
-		pos[0] = 3072;
-		pos[1] = 1024;
-	}
-
-	this->write_goal_position(3, pos[0]);
-	this->write_goal_position(4, pos[1]);
+void DynamixelPro2::use_gripper(){
+	// TO-DO!!
 }
-
 
 void DynamixelPro2::write_holding_torque() {
 	// Needs to switch modes first!!!!!
-	for (int i = 1; i < 6; i++) {
+	for (int i = 1; i < 6; i++) {		
 
-		unsigned char arr[1] = { 'Set' };
+		unsigned char arr[1] = {'Set'};
 		this->_write_to_servo_id(i, 0x40, arr, 1);
 	}
 }
@@ -109,43 +87,32 @@ void DynamixelPro2::write_torque(int servo_id, float torque, float time_of_torqu
 
 }
 
-
-String DynamixelPro2::get_instruction(int mode, String gesture) {
-	if (mode == this->PRE_SET_MODE) {
-		if (gesture == this->_FIST) {
+String DynamixelPro2::get_instruction(int mode, String gesture){
+	if (mode == this->PRE_SET_MODE){
+		if (gesture == this->_FIST){
 			return this->GRIPPER;
-		}
-		else if (gesture == this->_FINGERS_SPREAD) {
+		}else if (gesture == this->_FINGERS_SPREAD){
 			return this->EXTENDED;
-		}
-		else if (gesture == this->_WAVE_IN) {
+		}else if (gesture == this->_WAVE_IN){
 			return this->TO_USER;
-		}
-		else if (gesture == this->_WAVE_OUT) {
+		}else if (gesture == this->_WAVE_OUT){
 			return this->HOME;
-		}
-		else {
+		}else{
 			return this->UNKNOWN_GESTURE;
 		}
-	}
-	else if (mode == this->MANUAL_MODE) {
-		if (gesture == this->_FIST) {
+	}else if (mode == this->MANUAL_MODE){
+		if (gesture == this->_FIST){
 			return this->DOWN;
-		}
-		else if (gesture == this->_FINGERS_SPREAD) {
+		}else if (gesture == this->_FINGERS_SPREAD){
 			return this->UP;
-		}
-		else if (gesture == this->_WAVE_IN) {
+		}else if (gesture == this->_WAVE_IN){
 			return this->LEFT;
-		}
-		else if (gesture == this->_WAVE_OUT) {
+		}else if (gesture == this->_WAVE_OUT){
 			return this->RIGHT;
-		}
-		else {
+		}else{
 			return this->UNKNOWN_GESTURE;
 		}
-	}
-	else {
+	}else{
 		return this->UNKNOWN_MODE;
 	}
 }
@@ -153,15 +120,15 @@ String DynamixelPro2::get_instruction(int mode, String gesture) {
 
 void DynamixelPro2::_write_to_servo_id(int servo_id, unsigned short addr, unsigned char *arr, int n) {
 
-	n += 5;															// This skips the first 5 bits
-	unsigned char ID = this->_SERVO_HEX_ID[servo_id];
+	n += 5;													// This skips the first 5 bits
+	unsigned char ID = this->_servo_HEX_id[servo_id - 1];
 
 	this->_instruction_packet_array[0] = servo_id;
 	this->_instruction_packet_array[1] = (n & 0xFF);				//length
-	this->_instruction_packet_array[2] = (n & 0xFF00) >> 8;			//length
-	this->_instruction_packet_array[3] = 0x03;						//Instruction
-	this->_instruction_packet_array[4] = (addr & 0xFF);				//address
-	this->_instruction_packet_array[5] = (addr & 0xFF00) >> 8;		//address
+	this->_instruction_packet_array[2] = (n & 0xFF00) >> 8;		//length
+	this->_instruction_packet_array[3] = 0x03;					//Instruction
+	this->_instruction_packet_array[4] = (addr & 0xFF);			//address
+	this->_instruction_packet_array[5] = (addr & 0xFF00) >> 8;	//address
 
 	for (int i = 0; i < n - 5; i++) {
 		this->_instruction_packet_array[i + 6] = arr[i];
@@ -175,7 +142,7 @@ void DynamixelPro2::_write_to_servo_id(int servo_id, unsigned short addr, unsign
 void DynamixelPro2::write_goal_position(int servo_id, unsigned int pos) {
 
 	pos %= 4096;
-	unsigned char ID = this->_SERVO_HEX_ID[servo_id];
+	unsigned char ID = this->_servo_HEX_id[servo_id - 1];
 
 	unsigned char arr[] = {
 		(pos & 0xFF),
@@ -190,7 +157,7 @@ void DynamixelPro2::write_goal_position(int servo_id, unsigned int pos) {
 
 int DynamixelPro2::read_current_position(int servo_id) {
 
-	unsigned char ID = this->_SERVO_HEX_ID[servo_id];
+	unsigned char ID = this->_servo_HEX_id[servo_id - 1];
 
 	this->_clear_RX_buffer();
 	this->_read_from_servo_id(ID, 0x84, 4);			//Read from adress 0x84 (Present Position), byte size 4
@@ -203,7 +170,7 @@ int DynamixelPro2::read_current_position(int servo_id) {
 
 int DynamixelPro2::read_current_velocity(int servo_id) {
 
-	unsigned char ID = this->_SERVO_HEX_ID[servo_id];
+	unsigned char ID = this->_servo_HEX_id[servo_id - 1];
 
 	this->_clear_RX_buffer();
 	this->_read_from_servo_id(ID, 0x80, 4);				//Read from adress 0x80 (Present Velocity), byte size 4
@@ -236,9 +203,9 @@ void DynamixelPro2::_read_parameters(void) {
 
 	int j = 0;
 	for (int i = 0; i < 100; i++) {
-
+		
 		if (this->_return_packet[i] == 0x55 && this->_return_packet[i - 1] == 0 && this->_return_packet[i + 1] == 0) {	//Filtering the parameters from the returnpacket, by searching for the instruction (0x00, 0x55, 0x00)
-
+			
 			this->_data[j] = this->_return_packet[i - 3];							//Saving ID
 
 			this->_data[j + 1] = this->_return_packet[i + 2];						//Saving parameter bytes
@@ -292,9 +259,8 @@ void DynamixelPro2::_transmit_instruction_packet(int transLen) {
 	pt[3] = 0x00;
 
 
-	int i;
-	for (int i = 0; i <= transLen; i++) {
-		pt[i + 4] = _instruction_packet_array[i];
+	for (int j = 0; j <= transLen; j++) {
+		pt[j + 4] = _instruction_packet_array[j];
 	}
 
 	unsigned short crc = this->_update_crc(pt, arrLen - 2);
@@ -306,8 +272,8 @@ void DynamixelPro2::_transmit_instruction_packet(int transLen) {
 	pt[i++] = CRC_L;
 	pt[i] = CRC_H;
 
-	for (int i = 0; i < arrLen; i++) {
-		this->_serial->write(pt[i]);
+	for (int j = 0; j < arrLen; j++) {
+		this->_serial->write(pt[j]);
 	}
 
 	noInterrupts();
@@ -389,6 +355,7 @@ unsigned short DynamixelPro2::_update_crc(unsigned char *data_blk_ptr, unsigned 
 	return crc_accum;
 }
 
-void DynamixelPro2::_mode_switch(int mode) {
+void DynamixelPro2::_mode_switch(int mode){
 
 }
+
