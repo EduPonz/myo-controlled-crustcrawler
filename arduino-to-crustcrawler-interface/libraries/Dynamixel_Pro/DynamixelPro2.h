@@ -61,7 +61,7 @@ class DynamixelPro2 {
 		const String _FINGERS_SPREAD = "fingersSpread";
 		const String _WAVE_IN = "waveIn";
 		const String _WAVE_OUT = "waveOut";
-		const unsigned char _servo_HEX_id[5] = {0x01, 0x02, 0x03, 0x04, 0x05};	// Array to hold servo id's in HEX form
+		const unsigned char _SERVO_HEX_ID[5] = {0x01, 0x02, 0x03, 0x04, 0x05};	// Array to hold servo id's in HEX form
 
 		char _direction_pin;									// Pin to control TX/RX buffer chip
 		unsigned int _data[15];									// Data from ReturnPacket
