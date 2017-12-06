@@ -71,9 +71,12 @@ void DynamixelPro2::move_down() {
 	}
 }
 
+void DynamixelPro2::use_gripper(){
+	// TO-DO!!
+}
 
 void DynamixelPro2::write_holding_torque() {
-
+	// Needs to switch modes first!!!!!
 	for (int i = 1; i < 6; i++) {		
 
 		unsigned char arr[1] = {'Set'};
@@ -85,7 +88,37 @@ void DynamixelPro2::write_holding_torque() {
 void DynamixelPro2::write_torque(int servo_id, float torque, float time_of_torque) {
 
 
-}			
+}
+
+String DynamixelPro2::get_instruction(int mode, String gesture){
+	if (mode == this->PRE_SET_MODE){
+		if (gesture == this->_FIST){
+			return this->GRIPPER;
+		}else if (gesture == this->_FINGERS_SPREAD){
+			return this->EXTENDED;
+		}else if (gesture == this->_WAVE_IN){
+			return this->TO_USER;
+		}else if (gesture == this->_WAVE_OUT){
+			return this->HOME;
+		}else{
+			return this->UNKNOWN_GESTURE;
+		}
+	}else if (mode == this->MANUAL_MODE){
+		if (gesture == this->_FIST){
+			return this->DOWN;
+		}else if (gesture == this->_FINGERS_SPREAD){
+			return this->UP;
+		}else if (gesture == this->_WAVE_IN){
+			return this->LEFT;
+		}else if (gesture == this->_WAVE_OUT){
+			return this->RIGHT;
+		}else{
+			return this->UNKNOWN_GESTURE;
+		}
+	}else{
+		return this->UNKNOWN_MODE;
+	}
+}
 
 
 void DynamixelPro2::_write_to_servo_id(int servo_id, unsigned short addr, unsigned char *arr, int n) {
@@ -324,5 +357,9 @@ unsigned short DynamixelPro2::_update_crc(unsigned char *data_blk_ptr, unsigned 
 	}
 
 	return crc_accum;
+}
+
+void DynamixelPro2::_mode_switch(int mode){
+	
 }
 
