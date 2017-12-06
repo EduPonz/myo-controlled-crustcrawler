@@ -1,10 +1,10 @@
 /*
 Name:		PathPlanning.cpp
 Created:	12/1/2017 11:42:29 AM
-Author:	Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev
-Editor:	http://www.visualmicro.com
+Author:		Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev
+Editor:		http://www.visualmicro.com
 
-	This libraries functionality is to take in servos' current and goal positions, and based on those and the acceleration constrients (placed inside the library) 
+	This library's functionality is to take in servos' current and goal positions, and based on those and the acceleration constrients (placed inside the library) 
 	compute the amount of acceleration(deg/s^2) to be applied during the acceleration periode(placed inside the library), and if constant velocity is needed then calculate
 	for how long to keep a constant velocity(deg/s) before beginning deceleration. Furthermore, it can find the direction for the acceleration to be applied in and also find a servos' 
 	position(deg) at any given time after any given movement.  
@@ -310,8 +310,3 @@ bool PathPlanning::calculate_path(float servo1_current_pos, float servo2_current
 		return(false);
 	}
 }
-
-
-
-
-
