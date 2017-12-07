@@ -6,6 +6,11 @@ Author:		Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo 
 
 #include "DynamixelPro2.h"
 
+DynamixelPro2::DynamixelPro2() {
+	this->_direction_pin = -1;
+	this->_status_return_value = READ;
+}
+
 void DynamixelPro2::begin(long baud) {
 
 #if defined(__AVR_ATmega32U4__) || defined(__MK20DX128__) || defined(__AVR_ATmega2560__)
