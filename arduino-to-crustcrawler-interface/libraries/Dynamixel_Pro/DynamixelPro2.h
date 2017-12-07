@@ -28,7 +28,7 @@ class DynamixelPro2 {
 		const String RIGHT = "right";
 		const String UNKNOWN_MODE = "unknown mode";
 
-		DynamixelPro2() : _direction_pin(-1), _status_return_value(READ) { }
+		DynamixelPro2();
 		void begin(long);
 		void end(void);
 		void move_left();
