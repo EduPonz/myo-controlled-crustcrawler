@@ -50,7 +50,7 @@ void setup(){
 	
 	Serial.flush();                                       
 	_software_serial.begin(57600);                  
-	Serial.begin(9600);                                  
+	Serial.begin(115200);                                  
 	dynamixel.begin(_software_serial); 
 
 	dynamixel.initialization();
@@ -63,13 +63,15 @@ void setup(){
 
 void loop(){
 	
-	while (!Serial) {}
+	while (!Serial) {}////////////// What does this do ??????
 
+	Serial.flush();
 	if (Serial.available() > 0) {
-		if (millis() - prev_read_millis > 100) {
+		if (millis() - prev_read_millis > 20) {
 			String input = "";
 			input = serialInput();
 			applyInstructions(input);
+			Serial.flush();
 		}
 	}
 
@@ -178,19 +180,20 @@ void loop(){
 				}
 		
 
-			/*if (prev_instruction != instruction) {
+			if (prev_instruction != instruction) {
 				get_servo_positions();
 				send_json();
 				prev_instruction = instruction;
 				operation_id++;
-			}*/
-			mode = 0;
+			}
+			mode = 0; 
 		
 	}
 	//if (mode >= 2){
 	//	send_json();
 	//	mode = 0;
 	//}
+	
 }
 
 void get_servo_positions(){
