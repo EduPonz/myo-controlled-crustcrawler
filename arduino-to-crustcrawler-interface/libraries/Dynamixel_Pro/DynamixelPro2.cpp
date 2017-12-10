@@ -410,19 +410,19 @@ void DynamixelPro2::_transmit_instruction_packet(int transLen) {                
 	//}
 
 #else
-	if ((UCSR0A & B01100000) != B01100000) {                                             // Wait for TX data to be sent
+	if ((UCSR0A & B01100000) != B01100000) {        // Wait for TX data to be sent
 		_serial->flush();
 	}
 
 #endif
 
 	if (Direction_Pin > -1) {
-		digitalWrite(Direction_Pin, LOW);                                                //Set TX Buffer pin to LOW after data has been sent
+		digitalWrite(Direction_Pin, LOW);           //Set TX Buffer pin to LOW after data has been sent
 	}
 
 	interrupts();
 
-	delay(20);
+	delay(2);										// This delay value was orginally 20
 
 }
 
