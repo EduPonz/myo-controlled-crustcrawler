@@ -1,7 +1,7 @@
 /*
 Name:		DynamixelPro2.h
 Created:	12/5/2017 3:25:09 PM
-Author:		Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev
+Author:		Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev, Jesper Bro Kirstein Rosenberg
 */
 
 #ifndef DynamixelPro2_h
