@@ -1,7 +1,7 @@
 /*
 Name:		PathPlanning.cpp
 Created:	12/1/2017 11:42:29 AM
-Author:		Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev
+Author:		Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev, Jesper Bro Kirstein Rosenberg
 Editor:		http://www.visualmicro.com
 
 	This library's functionality is to take in servos' current and goal positions, and based on those and the acceleration constrients (placed inside the library) 

@@ -1,7 +1,7 @@
 /*	
 	Name: 	  PathPlanning.h
 	Created:  12 / 1 / 2017 11 : 42 : 29 AM
-	Author:   Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev
+	Author:   Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev, Jesper Bro Kirstein Rosenberg
 	Editor:   http://www.visualmicro.com
 */
 
