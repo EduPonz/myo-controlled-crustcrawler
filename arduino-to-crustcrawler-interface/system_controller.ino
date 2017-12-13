@@ -1,16 +1,10 @@
-/*
-Name:		system_controller.ino
-Created:	12/5/2017 3:25:09 PM
-Author:		Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev, Jesper Bro Kirstein Rosenberg
-*/
-
-
 #include <SoftwareSerial.h>
 #include <ArduinoJson.h>
 #include "DynamicsCalculator.h"
 #include "PathPlanning.h"
 #include "DynamixelPro2.h"
 #include "UnitsConverter.h"
+#include "SerLCD.h"
 
 const int k_p = 400;
 const int k_v = 40;
@@ -23,10 +17,12 @@ const String JOB_SUCCESS = "success";
 const String JOB_IN_PROGRESS = "in progress";
 
 SoftwareSerial _software_serial(10, 11);
+// SoftwareSerial lcd_serial(7,6);
 DynamicsCalculator dynamics_calculator;
 PathPlanning path_planning;
 DynamixelPro2 dynamixel;
 UnitsConverter convert;
+// SerLCD lcd_monitor(lcd_serial, 16, 2);
 
 float servo_position [3] = {0, 0, 0};
 float servo_velocity [3] = {0, 0, 0};
@@ -51,6 +47,7 @@ String prev_instruction = "";
 unsigned long time = millis();
 unsigned long prev_time = millis();
 unsigned long prev_read_millis = millis();
+unsigned long last_flush = millis();
 
 
 void setup(){
@@ -60,6 +57,8 @@ void setup(){
   Serial.flush();
   dynamixel.begin(_software_serial);
   dynamixel.initialization();
+  // lcd_serial.begin(9600);
+  // lcd_monitor.begin();
 
   pinMode(52, OUTPUT);
   pinMode(53, OUTPUT);
@@ -77,42 +76,60 @@ void loop(){
       prev_read_millis = millis();
       String input = "";
       input = serialInput();
-      applyInstructions(input);
+      if (input != ""){
+        applyInstructions(input);
+      }
     }
+  }
+
+  if ((millis() - last_flush) > 10000){
+    Serial.flush();
+    last_flush = millis();
   }
 
 
   if (mode == dynamixel.PRE_SET_MODE){
     digitalWrite(53, LOW);
     digitalWrite(52, HIGH);
+
     if (instruction == dynamixel.EXTENDED || instruction == dynamixel.TO_USER || instruction == dynamixel.HOME){
       job_status = JOB_IN_PROGRESS;
       get_servo_positions();
       path_status = path_planning.calculate_path(servo_position [0], servo_position [1], servo_position [2], instruction);
       send_json();
+
       if (path_status == true){
         prev_time = millis();
+
         while (true){
           time = millis() - prev_time;
           float servo_error_pos [3];
           float servo_error_vel [3];
           float servo_acc [3];
+
           if (time >= SAMPLING_RATE || time == 0){
+
             for (int i = 0; i < 3; ++i){
-              servo_error_pos [i] = convert.position_degrees_to_radians(convert.unit_to_degree(dynamixel.read_current_position(i))
-                - path_planning.get_position_sample(i, time)) * k_p;
-              servo_error_vel [i] = convert.position_degrees_to_radians(convert.unit_to_degree(dynamixel.read_current_velocity(i))
-                - path_planning.get_velocity_sample(i, time)) * k_v;
-              servo_acc [i] = path_planning.get_acceleration_sample(i, time);
+              servo_error_pos[i] = convert.position_degrees_to_radians(convert.unit_to_degree(dynamixel.read_current_position(i))
+                         - path_planning.get_position_sample(i, time)) * k_p;
+
+              servo_error_vel[i] = convert.speed_degrees_to_radians(convert.unit_to_degree(dynamixel.read_current_velocity(i))
+                         - path_planning.get_velocity_sample(i, time)) * k_v;
+              
+              servo_acc[i] = convert.acceleration_degrees_to_radians(path_planning.get_acceleration_sample(i, time));
             }
-            dynamics_calculator.set_thetas(servo_error_pos [0], servo_error_pos [1], servo_error_pos [2]);
-            dynamics_calculator.set_omegas(servo_error_vel [0], servo_error_vel [1], servo_error_vel [2]);
-            dynamics_calculator.set_alphas(servo_acc [0], servo_acc [1], servo_acc [2]);
+
+            dynamics_calculator.set_thetas(servo_error_pos[0], servo_error_pos[1], servo_error_pos[2]);
+            dynamics_calculator.set_omegas(servo_error_vel[0], servo_error_vel[1], servo_error_vel[2]);
+            dynamics_calculator.set_alphas(servo_acc[0], servo_acc[1], servo_acc[2]);
+            
             float* torque;
             dynamics_calculator.get_torque(torque); // we need some conversion here
+
             for (int i = 0; i < 3; ++i){
               dynamixel.write_torque(i, torque [i], time_for_torque);
             }
+
             prev_time = millis();
           }
 
@@ -138,7 +155,8 @@ void loop(){
         first_ok = false;
         second_ok = false;
         third_ok = false;
-      } else{
+
+      }else{
         get_servo_positions();
         job_status = JOB_FAILED;
       }
@@ -153,9 +171,10 @@ void loop(){
     } else{
       get_servo_positions();
       job_status = JOB_FAILED;
+      send_json();
     }
     operation_id++;
-  //   //mode = 0;
+    mode = 0;
 
   } else if (mode == dynamixel.MANUAL_MODE){
 
@@ -170,16 +189,19 @@ void loop(){
       delay(250);
     } else if (instruction == dynamixel.UP){
       dynamixel.move_up();
-      digitalWrite(46, LOW);
+      digitalWrite(46, HIGH);
       delay(250);
     } else if (instruction == dynamixel.LEFT){
       dynamixel.move_left();
+      digitalWrite(46, HIGH);
       delay(250);
     } else if (instruction == dynamixel.RIGHT){
       dynamixel.move_right();
+      digitalWrite(46, HIGH);
       delay(250);
     } else{
       job_status = JOB_FAILED;
+      digitalWrite(46, LOW);
       delay(250);
     }
     
@@ -195,25 +217,55 @@ void get_servo_positions(){
 
 
 String serialInput(){
-  String s = Serial.readString();
+  delay(100);
+    int n = Serial.available();
+    String s = Serial.readString();
+    // String s = "";
+    // int i = 0;
+    // char c;
+    // do{
+    //   c = Serial.read();
+    //   i++;
+    // }while((c != '{') && (i < n));
+    // if (c == '{'){
+    //   s += c;
+    //   do{
+    //     c = Serial.read();
+    //     s += c;
+    //     i++;
+    //   }while((c != '}') && (i < n));
+      
+    // }
+    // if (c != '}'){
+    //   s = "";
+    // }
+    // lcd_monitor.clear();
+    // lcd_monitor.setPosition(0,0);
+    // lcd_monitor.scrollRight();
+    // lcd_monitor.print(s);
     Serial.flush();
-  return s;
+    return s;
 }
 
 void applyInstructions(String instructions){
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& jsonInstructions = jsonBuffer.parseObject(instructions);
-  String string_mode = jsonInstructions ["mode"];
-  mode = string_mode.toInt();
-  String string_gesture = jsonInstructions ["gesture"];
-  gesture = string_gesture;
-  if (mode == dynamixel.MANUAL_MODE){
-    instruction = dynamixel.get_instruction(dynamixel.MANUAL_MODE, gesture);
-  }else if (mode == dynamixel.PRE_SET_MODE){
-    instruction = dynamixel.get_instruction(dynamixel.PRE_SET_MODE, gesture);
+  if (jsonInstructions.success()){
+    String string_mode = jsonInstructions ["mode"];
+    mode = string_mode.toInt();
+    String string_gesture = jsonInstructions ["gesture"];
+    gesture = string_gesture;
+    if (mode == dynamixel.MANUAL_MODE){
+      instruction = dynamixel.get_instruction(dynamixel.MANUAL_MODE, gesture);
+    }else if (mode == dynamixel.PRE_SET_MODE){
+      instruction = dynamixel.get_instruction(dynamixel.PRE_SET_MODE, gesture);
+    }else{
+      instruction = "";
+    }
   }else{
-    instruction = "";
+    Serial.flush();
   }
+  Serial.print(instructions);
 }
 
 void send_json(){
