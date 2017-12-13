@@ -82,6 +82,76 @@ void timing_example() {
 	Serial.println(" micro seconds");
 }
 
+void timing_calculate_path_example() {
+
+  int startTime = micros();
+
+  path.calculate_path(angleInputServo1_0, angleInputServo2_0, angleInputServo3_0, instruction);
+
+  int endTime = micros();
+
+  Serial.print("calculate_path() execution time = ");
+  Serial.print(endTime - startTime);
+  Serial.println(" micro seconds");
+}
+
+void timing_get_position_example() {
+
+  int startTime = 0;
+  int endTime = 0;
+  path.calculate_path(angleInputServo1_0, angleInputServo2_0, angleInputServo3_0, instruction);
+
+  startTime = micros();
+
+  for(int i = 0; i < 3; i++){
+  path.get_position_sample(i, sampleTime);
+  }
+
+  endTime = micros();
+
+  Serial.print("get_position_sample() execution time = ");
+  Serial.print(endTime - startTime);
+  Serial.println(" micro seconds");
+}
+
+void timing_get_velocity_example() {
+
+  int startTime = 0;
+  int endTime = 0;
+  path.calculate_path(angleInputServo1_0, angleInputServo2_0, angleInputServo3_0, instruction);
+
+  startTime = micros();
+
+  for(int i = 0; i < 3; i++){
+  path.get_velocity_sample(i, sampleTime);
+  }
+
+  endTime = micros();
+
+  Serial.print("get_velocity_sample() execution time = ");
+  Serial.print(endTime - startTime);
+  Serial.println(" micro seconds");
+}
+
+void timing_get_acceleration_example() {
+
+  int startTime = 0;
+  int endTime = 0;
+  path.calculate_path(angleInputServo1_0, angleInputServo2_0, angleInputServo3_0, instruction);
+
+  startTime = micros();
+
+  for(int i = 0; i < 3; i++){
+  path.get_acceleration_sample(i, sampleTime);
+  }
+  
+  endTime = micros();
+
+  Serial.print("get_acceleration_sample() execution time = ");
+  Serial.print(endTime - startTime);
+  Serial.println(" micro seconds");
+}
+
 void setup() {
 	Serial.begin(9600);
 	delay(500);
@@ -91,12 +161,15 @@ void setup() {
 	Serial.println("");
 	delay(500);
 
-	print_example();
-	
+	//print_example();
 }
 
 void loop() {
 
 	timing_example();
+  //timing_calculate_path_example();
+  //timing_get_position_example();
+  //timing_get_velocity_example();
+  //timing_get_acceleration_example();
 	delay(2000);
 }
