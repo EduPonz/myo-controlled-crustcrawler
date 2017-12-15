@@ -41,8 +41,10 @@ private:
 
 	myo::Pose currentPose;
 	
+	string prev_pose;
 	bool isUnlocked;
 
+	bool manual_mode_state_;
 	int mode_type_;	
 	int gesture_number_;
 	int json_id_;
