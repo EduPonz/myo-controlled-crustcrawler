@@ -5,23 +5,18 @@ Author:   Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo
 */
 
 #include "DynamixelPro2.h"
+#include <SoftwareSerial.h>
 
-/*
+
 DynamixelPro2::DynamixelPro2() {
-//pinMode(SERVO_CONTROL_PIN, OUTPUT);
-this->_status_return_value = READ;
-this->setDirectionPin(SERVO_CONTROL_PIN);
-this->switching_operating_mode(this->MANUAL_MODE);
-for (size_t i = 0; i < 3; i++){
-this->write_goal_position(i, this->_home_position[i]);
+
 }
-}
-*/
+
 
 
 void DynamixelPro2::begin(Stream &serial){
 
-  _serial = &serial;  // Set a reference to a specified Stream object (Hard or Soft Serial)
+  _software_serial = &serial;  // Set a reference to a specified Stream object (Hard or Soft Serial)
 
 }
 
@@ -32,13 +27,6 @@ void DynamixelPro2::end(){
 #else
   Serial.end();
 #endif
-
-}
-
-void DynamixelPro2::_set_direction_pin(unsigned char D_Pin){
-
-  Direction_Pin = D_Pin;
-  pinMode(Direction_Pin, OUTPUT);
 
 }
 
@@ -54,6 +42,13 @@ void DynamixelPro2::initialization(){
 
   this->write_goal_position(3, this->_GRIPPER_OPEN [0]);
   this->write_goal_position(4, this->_GRIPPER_OPEN [1]);
+}
+
+void DynamixelPro2::_set_direction_pin(unsigned char D_Pin){
+
+  Direction_Pin = D_Pin;
+  pinMode(Direction_Pin, OUTPUT);
+
 }
 
 void DynamixelPro2::move_left(){
@@ -95,7 +90,7 @@ void DynamixelPro2::use_gripper(){
   pos [0] = this->read_current_position(3);   // Reads the position of servo 4 
   pos [1] = this->read_current_position(4);   // Reads the position of servo 5
 
-  if ((abs(pos [0] -_GRIPPER_OPEN [0]) < 10) || (abs(pos [1] - _GRIPPER_OPEN [1]) < 10)){
+  if ((abs(pos [0] - _GRIPPER_OPEN [0]) < 10) || (abs(pos [1] - _GRIPPER_OPEN [1]) < 10)){
     this->write_goal_position(3, this->_GRIPPER_CLOSE [0]);
     this->write_goal_position(4, this->_GRIPPER_CLOSE [1]);
   } else{
@@ -108,7 +103,7 @@ void DynamixelPro2::write_holding_torque(bool state){
 
   unsigned char arr [1] = {state};
   for (int i = 0; i < 5; i++){
-    this->_write_to_servo_id(_SERVO_HEX_ID[i], 0x40, arr, 1);
+    this->_write_to_servo_id(_SERVO_HEX_ID [i], 0x40, arr, 1);
   }
 }
 
@@ -170,7 +165,6 @@ void DynamixelPro2::_write_to_servo_id(unsigned char ID, unsigned short addr, un
     _instruction_packet_array [i + 6] = arr [i];
   }
 
-  _clear_RX_buffer();
   _transmit_instruction_packet(n);
 
 }
@@ -204,7 +198,6 @@ int DynamixelPro2::read_current_position(int servo_id){
 
   unsigned char ID = this->_SERVO_HEX_ID [servo_id];
 
-  this->_clear_RX_buffer();
   this->_read_from_servo_id(ID, 0x84, 4);     //Read from adress 0x84 (Present Position), byte size 4
   this->_read_parameters();           //Filters parameters from ReturnPacket
 
@@ -216,7 +209,6 @@ int DynamixelPro2::read_current_velocity(int servo_id){
 
   unsigned char ID = this->_SERVO_HEX_ID [servo_id];
 
-  this->_clear_RX_buffer();
   this->_read_from_servo_id(ID, 0x80, 4);       //Read from adress 0x80 (Present Velocity), byte size 4
   this->_read_parameters();             //Filters parameters from ReturnPacket
 
@@ -250,7 +242,6 @@ void DynamixelPro2::switching_operating_mode(int modeChoice){
 
 float DynamixelPro2::readPWM(unsigned char ID){
 
-  _clear_RX_buffer();
   _read_from_servo_id(ID, 0x7C, 4);                   //Read from adress 0x7E (Present Load), byte size 4 (should be 2?)
   _read_parameters();                      //Filters parameters from ReturnPacket
 
@@ -272,7 +263,6 @@ void DynamixelPro2::_read_from_servo_id(unsigned char ID, unsigned short addr, i
   this->_instruction_packet_array [6] = ((n - 3) & 0xFF);     //data length
   this->_instruction_packet_array [7] = ((n - 3) & 0xFF00) >> 8;    // data length
 
-  this->_clear_RX_buffer();
   this->_transmit_instruction_packet(n);
   this->_read_return_packet();
 }
@@ -298,8 +288,8 @@ void DynamixelPro2::_read_parameters(void){
 void DynamixelPro2::_read_return_packet(void){
 
   int i = 0;
-  while (this->_serial->available() > 0){         //Read information when available
-    int incomingbyte = this->_serial->read();     //Save incomingbyte
+  while (this->_software_serial->available() > 0){         //Read information when available
+    int incomingbyte = this->_software_serial->read();     //Save incomingbyte
 
     this->_return_packet [i] = incomingbyte;        //Save data in ReturnPacket array
     i++;
@@ -351,19 +341,20 @@ String DynamixelPro2::get_instruction(int mode, String gesture){
 
 void DynamixelPro2::_clear_RX_buffer(void){
 
-  while (this->_serial->read() != -1);      // Clears the RX buffer;
+  while (this->_software_serial->read() != -1);      // Clears the RX buffer;
 }
 
 void DynamixelPro2::_transmit_instruction_packet(int transLen){                                   // Transmit instruction packet to Dynamixel
 
+  _clear_RX_buffer();
   if (Direction_Pin > -1){
     digitalWrite(Direction_Pin, HIGH);                                               // Set TX Buffer pin to HIGH
   }
 
   int arrLen = transLen + 7;
 
-  unsigned char* pt;
-  pt = new unsigned char [7 + transLen];
+  unsigned char pt[7 + transLen];
+  //pt = new unsigned char [7 + transLen];
 
   pt [0] = 0xFF;
   pt [1] = 0xFF;
@@ -385,25 +376,25 @@ void DynamixelPro2::_transmit_instruction_packet(int transLen){                 
   pt [i] = CRC_H;
 
   for (i = 0; i < arrLen; i++){
-    _serial->write(pt [i]);
+    _software_serial->write(pt [i]);
   }
 
   noInterrupts();
 
 #if defined(__AVR_ATmega32U4__) || defined(__MK20DX128__) || defined(__AVR_ATmega2560__) // Leonardo and Mega use Serial1
   if ((UCSR1A & B01100000) != B01100000){                                             // Wait for TX data to be sent
-    _serial->flush();
+    _software_serial->flush();
   }
 
 #elif defined(__SAM3X8E__)
 
   //if(USART_GetFlagStatus(USART1, USART_FLAG_TC) != RESET)
-  _serial->flush();
+  _software_serial->flush();
   //}
 
 #else
   if ((UCSR0A & B01100000) != B01100000){        // Wait for TX data to be sent
-    _serial->flush();
+    _software_serial->flush();
   }
 
 #endif
@@ -414,7 +405,7 @@ void DynamixelPro2::_transmit_instruction_packet(int transLen){                 
 
   interrupts();
 
-  delay(10);                    // This delay value was orginally 20
+  delay(20);                    // This delay value was orginally 20
 }
 
 unsigned short DynamixelPro2::_update_crc(unsigned char *data_blk_ptr, unsigned short data_blk_size){
