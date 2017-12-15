@@ -87,7 +87,7 @@ private:
   unsigned int _return_packet [100];            // Array to hold returned status packet data
   unsigned char _instruction_packet_array [64];     // Array to hold instruction packet data
   unsigned char _status_return_value;           // Status packet return states ( NON , READ , ALL )
-  const float _home_position [3] = {2048, 2048, 2048};  // {servo 2 = 2048, servo 3 = 2048,  servo 4 and 5 = 2048}
+  const float _home_position [3] = {2200, 1320, 770};  // As shown in the report = {2200, 1320, 770}          As porposed = {2200, 765, 3330}
   char            Direction_Pin;              // Pin to control TX/RX buffer chip
 };
 
