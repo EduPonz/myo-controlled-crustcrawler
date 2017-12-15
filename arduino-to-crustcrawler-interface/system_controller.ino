@@ -16,12 +16,12 @@ const String JOB_FAILED = "failed";
 const String JOB_SUCCESS = "success";
 const String JOB_IN_PROGRESS = "in progress";
 
-SoftwareSerial _software_serial(10, 11);
-// SoftwareSerial lcd_serial(7,6);
+ SoftwareSerial _software_serial(10, 11);
 DynamicsCalculator dynamics_calculator;
 PathPlanning path_planning;
 DynamixelPro2 dynamixel;
 UnitsConverter convert;
+// SoftwareSerial lcd_serial(7,6);
 // SerLCD lcd_monitor(lcd_serial, 16, 2);
 
 float servo_position [3] = {0, 0, 0};
@@ -41,28 +41,23 @@ int mode = 0;
 String instruction = "";
 bool path_status = false;
 String gesture = dynamixel.UNKNOWN_GESTURE;
-//String gesture = "unknown gesture";
+bool input_empty = true;
+int overwrite_delay = 250;
 
 String prev_instruction = "";
 unsigned long time = millis();
 unsigned long prev_time = millis();
-unsigned long prev_read_millis = millis();
-unsigned long last_flush = millis();
 
 
 void setup(){
 
-  _software_serial.begin(57600);
+   _software_serial.begin(57600);
   Serial.begin(115200);
-  Serial.flush();
-  dynamixel.begin(_software_serial);
-  dynamixel.initialization();
+  clear_pc_buffer();
+   dynamixel.begin(_software_serial);
+  //dynamixel.initialization();
   // lcd_serial.begin(9600);
   // lcd_monitor.begin();
-
-  pinMode(52, OUTPUT);
-  pinMode(53, OUTPUT);
-  pinMode(46, OUTPUT);
 
 }
 
@@ -70,31 +65,21 @@ void loop(){
 
   while (!Serial){}
 
-  //Serial.flush();
   if (Serial.available() > 0){
-    if (millis() - prev_read_millis > 100){
-      prev_read_millis = millis();
-      String input = "";
-      input = serialInput();
-      if (input != ""){
-        applyInstructions(input);
-      }
+    String input = "";
+    input = serialInput();
+    if (input != ""){
+      applyInstructions(input);
+      input_empty = false;
+    } else{
+      input_empty = true;
     }
   }
 
-  if ((millis() - last_flush) > 10000){
-    Serial.flush();
-    last_flush = millis();
-  }
-
-
-  if (mode == dynamixel.PRE_SET_MODE){
-    digitalWrite(53, LOW);
-    digitalWrite(52, HIGH);
+  if (mode == dynamixel.PRE_SET_MODE && !input_empty){
 
     if (instruction == dynamixel.EXTENDED || instruction == dynamixel.TO_USER || instruction == dynamixel.HOME){
       job_status = JOB_IN_PROGRESS;
-      get_servo_positions();
       path_status = path_planning.calculate_path(servo_position [0], servo_position [1], servo_position [2], instruction);
       send_json();
 
@@ -111,7 +96,7 @@ void loop(){
 
             for (int i = 0; i < 3; ++i){
               servo_error_pos[i] = convert.position_degrees_to_radians(convert.unit_to_degree(dynamixel.read_current_position(i))
-                         - path_planning.get_position_sample(i, time)) * k_p;
+                           - path_planning.get_position_sample(i, time)) * k_p;
 
               servo_error_vel[i] = convert.speed_degrees_to_radians(convert.unit_to_degree(dynamixel.read_current_velocity(i))
                          - path_planning.get_velocity_sample(i, time)) * k_v;
@@ -147,7 +132,6 @@ void loop(){
             break;
           }
         }
-        get_servo_positions();
         job_status = JOB_SUCCESS;
         send_json();
         job_status = JOB_FAILED;
@@ -156,9 +140,9 @@ void loop(){
         second_ok = false;
         third_ok = false;
 
-      }else{
-        get_servo_positions();
+      } else{
         job_status = JOB_FAILED;
+        send_json();
       }
 
     } else if (instruction == dynamixel.GRIPPER){
@@ -166,47 +150,33 @@ void loop(){
       instruction = "";
       delay(GRIPPER_DELAY);
       job_status = JOB_SUCCESS;
-      get_servo_positions();
       send_json();
     } else{
-      get_servo_positions();
       job_status = JOB_FAILED;
       send_json();
     }
     operation_id++;
     mode = 0;
 
-  } else if (mode == dynamixel.MANUAL_MODE){
-
-    digitalWrite(52, LOW);
-    digitalWrite(53, HIGH);
-
-    job_status = JOB_SUCCESS;
+  } else if (mode == dynamixel.MANUAL_MODE && !input_empty){
 
     if (instruction == dynamixel.DOWN){
       dynamixel.move_down();
-      digitalWrite(46, HIGH);
-      delay(250);
+      delay(overwrite_delay);
     } else if (instruction == dynamixel.UP){
       dynamixel.move_up();
-      digitalWrite(46, HIGH);
-      delay(250);
+      delay(overwrite_delay);
     } else if (instruction == dynamixel.LEFT){
       dynamixel.move_left();
-      digitalWrite(46, HIGH);
-      delay(250);
+      delay(overwrite_delay);
     } else if (instruction == dynamixel.RIGHT){
       dynamixel.move_right();
-      digitalWrite(46, HIGH);
-      delay(250);
+      delay(overwrite_delay);
     } else{
-      job_status = JOB_FAILED;
-      digitalWrite(46, LOW);
-      delay(250);
-    }
-    
+      mode = 0;
+      delay(overwrite_delay);
+    }   
   }
-
 }
 
 void get_servo_positions(){
@@ -215,46 +185,41 @@ void get_servo_positions(){
   }
 }
 
-
 String serialInput(){
   delay(100);
-    int n = Serial.available();
-    String s = Serial.readString();
-    // String s = "";
-    // int i = 0;
-    // char c;
-    // do{
-    //   c = Serial.read();
-    //   i++;
-    // }while((c != '{') && (i < n));
-    // if (c == '{'){
-    //   s += c;
-    //   do{
-    //     c = Serial.read();
-    //     s += c;
-    //     i++;
-    //   }while((c != '}') && (i < n));
-      
-    // }
-    // if (c != '}'){
-    //   s = "";
-    // }
-    // lcd_monitor.clear();
-    // lcd_monitor.setPosition(0,0);
-    // lcd_monitor.scrollRight();
-    // lcd_monitor.print(s);
-    Serial.flush();
-    return s;
+  String input = "";
+  char c;
+  bool open_brace = false;
+  while (Serial.available() > 0){
+    c = Serial.read();
+    if ((c == '{') || (open_brace == true)){
+      open_brace = true;
+      input += c;
+    }
+    if (c == '}'){
+      open_brace = false;
+    }
+  }
+ 
+  return input;
+}
+
+void clear_pc_buffer(){
+  while (Serial.available() > 0){
+    Serial.read();
+  }
 }
 
 void applyInstructions(String instructions){
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& jsonInstructions = jsonBuffer.parseObject(instructions);
+
   if (jsonInstructions.success()){
-    String string_mode = jsonInstructions ["mode"];
+    String string_mode = jsonInstructions["mode"];
     mode = string_mode.toInt();
-    String string_gesture = jsonInstructions ["gesture"];
+    String string_gesture = jsonInstructions["gesture"];
     gesture = string_gesture;
+
     if (mode == dynamixel.MANUAL_MODE){
       instruction = dynamixel.get_instruction(dynamixel.MANUAL_MODE, gesture);
     }else if (mode == dynamixel.PRE_SET_MODE){
@@ -263,26 +228,25 @@ void applyInstructions(String instructions){
       instruction = "";
     }
   }else{
-    Serial.flush();
+    clear_pc_buffer();
   }
-  Serial.print(instructions);
 }
 
 void send_json(){
+  get_servo_positions();
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& jsonMessage = jsonBuffer.createObject();
-  jsonMessage ["from arduino"] = true;              // bool
-  jsonMessage ["operation id"] = operation_id;          // int
-  jsonMessage ["mode"] = mode;                      // int
-  jsonMessage ["gesture"] = gesture;                // String
-  jsonMessage ["job status"] = job_status;            // String
-  jsonMessage ["instruction"] = instruction;          // String
-  jsonMessage ["path status"] = path_status;          // bool
+  jsonMessage ["operation id"] = operation_id;      // int
+  jsonMessage ["mode"] = mode;              // int
+  jsonMessage ["gesture"] = gesture;            // String
+  jsonMessage ["job status"] = job_status;        // String
+  jsonMessage ["instruction"] = instruction;        // String
+  jsonMessage ["path status"] = path_status;        // bool
   jsonMessage ["servo 1 position"] = servo_position [0];  // float
   jsonMessage ["servo 2 position"] = servo_position [1];  // float
   jsonMessage ["servo 3 position"] = servo_position [2];  // float
+  clear_pc_buffer();
   jsonMessage.printTo(Serial);
   Serial.println();
-  delay(100);
   Serial.flush();
 }
