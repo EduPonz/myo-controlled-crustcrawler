@@ -1,7 +1,7 @@
 /*
  Name:		Path_Planning_Demo.ino
  Created:	11/30/2017 11:05:15 PM
- Author:	Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev 
+ Author:	Steffan Svendsen, Jesper Bro Kirstein Rosenberg, Vincent Joly, Simone Jensen, David Michalik, Eduardo Ponz Segrelles, Ivelin Krasimirov Penchev 
 */
 
 /*

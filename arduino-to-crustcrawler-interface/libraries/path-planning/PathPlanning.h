@@ -15,13 +15,12 @@ class PathPlanning{
   public:
       PathPlanning();
       void time_constant_velocity();
-          float dominant_servo_deltaTheta();
-          float time_total(float delta_theta);
+      float dominant_servo_deltaTheta();
+      float time_total(float delta_theta);
       float get_position_sample(int servo_id, float sampleTime_milliSec);
       float get_velocity_sample(int servo_id, float sampleTime_milliSec);
       float get_acceleration_sample(int servo_id, float sampleTime_milliSec);
       float get_goal_position(int servo_id);
-      bool final_angle_restriction_check(float knownServo1_f, float knownServo2_f, float knownServo3_f);
       bool starting_angle_warning(float servo1_current_pos, float servo2_current_pos, float servo3_current_pos);
       bool calculate_path(float servo1_current_pos, float servo2_current_pos, float servo3_current_pos, String instruction);
 

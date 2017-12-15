@@ -218,32 +218,6 @@ float PathPlanning::get_goal_position(int servo_id){
 }
 
 
-
-
-// Question here!!! This function is not relevant!!!
-//The function checks if the goal position of Servo 1, 2 and 3 is within the allowed angle range. Returns false if the robot mustn't move! 
-bool PathPlanning::final_angle_restriction_check(float knownServo1_f, float knownServo2_f, float knownServo3_f) {
-  if (knownServo1_f < this->_theta_restricted_servo1[0] || knownServo1_f > this->_theta_restricted_servo1[1]) {
-    // Final position of servo 1 is not allowed.
-    return false;
-  }
-  else if (knownServo2_f < this->_theta_restricted_servo2[0] || knownServo2_f > this->_theta_restricted_servo2[1]) {
-    // Final position of servo 2 is not allowed.
-    return false;
-  }
-  else if (knownServo3_f < this->_theta_restricted_servo3[0] || knownServo3_f > this->_theta_restricted_servo3[1]) {
-    // Final position of servo 3 is not allowed.
-    return false;
-  }
-  else {
-    // Movement of the three servos is allowed.
-    return true;
-  }
-}
-
-
-
-
 //This function checks if the starting position of the servo before going to a specific position is within the allowed area.
 //If it is not, it will send a warnining and will give a delay before executing the program. Retunrns false if gives a warning.
 bool PathPlanning::starting_angle_warning(float servo1_current_pos, float servo2_current_pos, float servo3_current_pos) {
@@ -279,7 +253,7 @@ bool PathPlanning::starting_angle_warning(float servo1_current_pos, float servo2
 // which are public variables that then can be accessed. 
 bool PathPlanning::calculate_path(float servo1_current_pos, float servo2_current_pos, float servo3_current_pos, String instruction){
 
-  if (this->final_angle_restriction_check(servo1_current_pos, servo2_current_pos, servo3_current_pos) && this->starting_angle_warning(servo1_current_pos, servo1_current_pos, servo1_current_pos)) {
+  if (this->starting_angle_warning(servo1_current_pos, servo1_current_pos, servo1_current_pos)) {
 
     if (instruction == this->_HOME) {
       for (int i = 0; i < 3; i++) {
