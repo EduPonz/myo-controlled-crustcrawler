@@ -32,10 +32,10 @@ class PathPlanning{
       float constantVelocityTime = 0;
       float totalTime = 0;
 
-      // CrustCrawler preset positions, TO BE EDITED!!
-      float home_position[3] = {45, 90, 135};
-      float extended_position[3] = {0, 45, 90};
-      float to_user_position[3] = {135, 90, 45};
+      // CrustCrawler preset positions
+      float home_position[3] = {176, 105.6, 61.6};			// porposal = {176, 61.2, 266.4} 
+      float extended_position[3] = {176, 80, 163.84};
+      float to_user_position[3] = {96, 128, 120};
       
     
   private:
