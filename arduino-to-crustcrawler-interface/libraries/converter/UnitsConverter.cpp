@@ -19,14 +19,14 @@ int UnitsConverter::torque_to_PWM_unit(int servo_id, float torque) {	// This fun
 
 	float vel = unit_to_degree(dynamixel.read_current_velocity(servo_id));
 
-	if (servo_id == 0) {		// For MX-64 servo.		Check that the servo_id correspond with the correct servo.
-		B = 2.3 / (33*0.1047);
-		k = 2.4 / 2.1;
-		R = 18.2;
-	}else {						// For MX 106 servo.
-		B = 2.6 / (18*0.1047); 
-		k = 3.3 / 2.1;
-		R = 29.3;
+	if (servo_id == 1) {		// For MX-106 servo.
+		B = 0.0137;
+		k = 1.8031;
+		R = 9.7281;
+	}else {				// For MX 106 servo.
+		B = 0.0109; 
+		k = 1.2691;
+		R = 8.3133;
 	}
 
 	int goalPWM = (((((torque + B*vel) / k)*R) + k*vel) / 12.5) * 885;
