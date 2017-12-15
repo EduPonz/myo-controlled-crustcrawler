@@ -34,20 +34,21 @@ private:
 	void populateJson(int, string);
 	void saveJson(string);
 	void saveIncJson(string);
+	void jsonHandler(string, int);
 	void sendToSerial(string);
 
 	string recieveFromSerial();
 	void onPose(myo::Myo*, uint64_t, myo::Pose);
 
 	myo::Pose currentPose;
-	
 	string prev_pose;
+	
 	bool isUnlocked;
 
-	bool manual_mode_state_;
 	int mode_type_;	
 	int gesture_number_;
 	int json_id_;
+	bool manual_mode_state_;
 	
 	string output_json_;
 	string current_time_;
@@ -61,6 +62,3 @@ private:
 	time_t now_construct;
 	time_t now_serial_read;
 };
-
-
-
