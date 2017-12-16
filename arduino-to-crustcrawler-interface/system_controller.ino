@@ -4,25 +4,22 @@
 #include "PathPlanning.h"
 #include "DynamixelPro2.h"
 #include "UnitsConverter.h"
-#include "SerLCD.h"
 
 const int k_p = 400;
 const int k_v = 40;
 const float ALLOWED_ERROR = 2; // Some value
 const int GRIPPER_DELAY = 12000;
-const int SAMPLING_RATE = 50;
+const int SAMPLING_RATE = 110;
 const int time_for_torque = 2000; // I don't think we need a time on it.
 const String JOB_FAILED = "failed";
 const String JOB_SUCCESS = "success";
 const String JOB_IN_PROGRESS = "in progress";
 
- SoftwareSerial _software_serial(10, 11);
+SoftwareSerial _software_serial(10, 11);
 DynamicsCalculator dynamics_calculator;
 PathPlanning path_planning;
 DynamixelPro2 dynamixel;
 UnitsConverter convert;
-// SoftwareSerial lcd_serial(7,6);
-// SerLCD lcd_monitor(lcd_serial, 16, 2);
 
 float servo_position [3] = {0, 0, 0};
 float servo_velocity [3] = {0, 0, 0};
@@ -30,34 +27,37 @@ float servo_acceleration [3] = {0, 0, 0};
 float desired_position [3] = {0, 0, 0};
 float desired_velocity [3] = {0, 0, 0};
 float desired_acceleration [3] = {0, 0, 0};
+float servo_error_pos [3];
+float servo_error_vel [3];
+float servo_acc [3];
 
 bool first_ok = false;
 bool second_ok = false;
 bool third_ok = false;
-
-int operation_id = 1;
-String job_status = JOB_SUCCESS;
-int mode = 0;
-String instruction = "";
 bool path_status = false;
-String gesture = dynamixel.UNKNOWN_GESTURE;
 bool input_empty = true;
-int overwrite_delay = 250;
 
+int mode = 0;
+int operation_id = 1;
+int overwrite_delay = 250;
+String instruction = "";
+String job_status = JOB_SUCCESS;
+String gesture = dynamixel.UNKNOWN_GESTURE;
 String prev_instruction = "";
+
 unsigned long time = millis();
 unsigned long prev_time = millis();
 
+//unsigned long startTime = 0;
+//unsigned long endTime = 0;
 
 void setup(){
 
-   _software_serial.begin(57600);
+  _software_serial.begin(57600);
   Serial.begin(115200);
   clear_pc_buffer();
-   dynamixel.begin(_software_serial);
-  //dynamixel.initialization();
-  // lcd_serial.begin(9600);
-  // lcd_monitor.begin();
+  dynamixel.begin(_software_serial);
+  dynamixel.initialization();
 
 }
 
@@ -87,10 +87,10 @@ void loop(){
         prev_time = millis();
 
         while (true){
+
+          //startTime = millis();
+          
           time = millis() - prev_time;
-          float servo_error_pos [3];
-          float servo_error_vel [3];
-          float servo_acc [3];
 
           if (time >= SAMPLING_RATE || time == 0){
 
@@ -112,7 +112,7 @@ void loop(){
             dynamics_calculator.get_torque(torque); // we need some conversion here
 
             for (int i = 0; i < 3; ++i){
-              dynamixel.write_torque(i, convert.torque_to_unit(torque[i]), time_for_torque);
+              dynamixel.writePWM(i, convert.torque_to_PWM_unit(i, convert.speed_degrees_to_radians(convert.unit_to_speed_degree(dynamixel.read_current_velocity(i))), torque[i]));
             }
 
             prev_time = millis();
@@ -129,8 +129,13 @@ void loop(){
           }
           if (first_ok && second_ok && third_ok){
             dynamixel.write_holding_torque(true);
-            break;
+            //break;
           }
+          /*endTime = millis();
+          Serial.print("Execution time = ");
+          Serial.print(endTime - startTime);
+          Serial.println(" milli seconds");
+          delay(1000);*/
         }
         job_status = JOB_SUCCESS;
         send_json();
