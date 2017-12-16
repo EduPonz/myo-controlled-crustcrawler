@@ -26,7 +26,7 @@ int UnitsConverter::torque_to_PWM_unit(int servo_id, float vel, float torque) {
 		R = 8.3133;
 	}
 
-	int goalPWM = (((((torque + B*vel) / k)*R) + k*vel) / 12.5) * 885;
+	int goalPWM = ((((((torque + B*vel) / k)*R) + k*vel) / 12.5) * 885)*(2.7/1.7) +5;
 
 	return(goalPWM);
 }
