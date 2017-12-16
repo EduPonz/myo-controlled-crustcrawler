@@ -8,7 +8,6 @@ Author:   Steffan Svendsen, Vincent Joly, Simone Jensen, David Michalik, Eduardo
 #define DynamixelPro2_h
 
 #include "Arduino.h"
-#include <SoftwareSerial.h>
 
 #define NONE                            0x00
 #define READ                            0x01
@@ -35,9 +34,6 @@ public:
   const String UNKNOWN_MODE = "unknown mode";
 
 
-  DynamixelPro2();
-
-
   void begin(Stream&);
   void end(void);
   void initialization();
@@ -47,7 +43,6 @@ public:
   void move_down();
   void use_gripper();
   void write_holding_torque(bool state);
-  void write_torque(int servo_id, float torque, float time_of_torque);
   void write_goal_position(int servo_id, unsigned int pos);
   int read_current_position(int servo_id);
   int read_current_velocity(int servo_id);
@@ -55,19 +50,19 @@ public:
   void switching_operating_mode(int modeChoice);
   void write_operation_mode(unsigned char ID, unsigned short modeSel);
   float readPWM(unsigned char ID);
-  void writePWM(unsigned char ID, unsigned int PWM);
+  void writePWM(int servo_id, int PWM);
 
 
 private:
 
   Stream * _software_serial;
-  //SoftwareSerial * _software_serial = new SoftwareSerial(10,11);
+  
   void _write_to_servo_id(unsigned char ID, unsigned short addr, unsigned char *arr, int n);
   void _write_profile_acceleration(int servo_id, unsigned int pac);
   void _write_profile_velocity(int servo_id, unsigned int pvl);
   void _read_from_servo_id(unsigned char ID, unsigned short addr, int n);
   void _read_return_packet(void);
-  void _read_parameters(void);
+  void _get_parameters(void);
   void _clear_RX_buffer(void);
   void _transmit_instruction_packet(int transLen);
   void _mode_switch(int mode);
@@ -85,10 +80,10 @@ private:
 
   unsigned int _data [15];                  // Data from ReturnPacket
   unsigned int _return_packet [100];            // Array to hold returned status packet data
-  unsigned char _instruction_packet_array [64];     // Array to hold instruction packet data
-  unsigned char _status_return_value;           // Status packet return states ( NON , READ , ALL )
-  const float _home_position [3] = {2200, 1320, 770};  // As shown in the report = {2200, 1320, 770}          As porposed = {2200, 765, 3330}
-  char            Direction_Pin;              // Pin to control TX/RX buffer chip
+  unsigned char _instruction_packet_array [64];			// Array to hold instruction packet data
+  unsigned char _status_return_value;					// Status packet return states ( NON , READ , ALL )
+  const float _home_position [3] = {2200, 765, 3330}; 
+  char            Direction_Pin;						// Pin to control TX/RX buffer chip
 };
 
 #endif
