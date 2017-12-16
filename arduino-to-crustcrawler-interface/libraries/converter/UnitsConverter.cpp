@@ -7,17 +7,14 @@
 
 #include "Arduino.h"
 #include "UnitsConverter.h"
-#include "DynamixelPro2.h"
 
 int UnitsConverter::degree_to_unit(float degree) {
 	return(degree / this->_UNIT_TO_DEGREE);
 }
 
-int UnitsConverter::torque_to_PWM_unit(int servo_id, float torque) {	// This function needs to be looked at to see if the logic is correct.
+int UnitsConverter::torque_to_PWM_unit(int servo_id, float vel, float torque) {	
 
-	float B, k, R;
-
-	float vel = unit_to_degree(dynamixel.read_current_velocity(servo_id));
+	float B, k, R;	
 
 	if (servo_id == 1) {		// For MX-106 servo.
 		B = 0.0137;
@@ -53,3 +50,12 @@ float UnitsConverter::speed_degrees_to_radians(float omega) {
 float UnitsConverter::acceleration_degrees_to_radians(float alpha) {
 	return(alpha * this->_ACC_DEGREE_TO_RAD);
 }
+
+float UnitsConverter::unit_to_speed_degree(int unit){
+  return(unit * _UNIT_TO_SPEED_DEGREE);
+}
+
+
+
+
+
