@@ -112,7 +112,7 @@ void loop(){
             dynamics_calculator.get_torque(torque); // we need some conversion here
 
             for (int i = 0; i < 3; ++i){
-              dynamixel.write_torque(i, torque [i], time_for_torque);
+              dynamixel.write_torque(i, convert.torque_to_unit(torque[i]), time_for_torque);
             }
 
             prev_time = millis();
