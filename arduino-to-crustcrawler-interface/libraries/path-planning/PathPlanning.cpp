@@ -12,9 +12,7 @@ Editor: http://www.visualmicro.com
 #include "Arduino.h"
 #include "PathPlanning.h"
 
-PathPlanning::PathPlanning(){}
-
-// this function finds and returns the biggest duration of the Constant Velocity  
+// This function finds and returns the biggest duration of the Constant Velocity  
 void PathPlanning::time_constant_velocity(){
 
     if(this->totalTime >= 2 * this->_TIME_OF_ACCELERATION){
@@ -26,7 +24,7 @@ void PathPlanning::time_constant_velocity(){
 
 
 // This function finds and returns the acceleration and the direction(+/-) in which it need to be applied for a specific servo, for it to reach its position 
-//simultaneously with the other servos.
+// simultaneously with the other servos.
 // It takes an argument from the specific servo, its delta theta. 
 void PathPlanning::_calculate_acceleration() {
 
@@ -213,7 +211,6 @@ void PathPlanning::_calculate_deceleration_segment_start_theta() {
 
 // This function returns the goal position of the last calculated path, based on the called servo/servo_id. 
 float PathPlanning::get_goal_position(int servo_id){
-  
   return(this->_servo_goal_pos[servo_id]);
 }
 
@@ -221,31 +218,23 @@ float PathPlanning::get_goal_position(int servo_id){
 //This function checks if the starting position of the servo before going to a specific position is within the allowed area.
 //If it is not, it will send a warnining and will give a delay before executing the program. Retunrns false if gives a warning.
 bool PathPlanning::starting_angle_warning(float servo1_current_pos, float servo2_current_pos, float servo3_current_pos) {
-  if (servo1_current_pos < this->_theta_restricted_servo1[0] || servo1_current_pos > this->_theta_restricted_servo1[1]) {
-    // WARNING: Starting position of servo 1 is not safe.
-    if (servo2_current_pos < this->_theta_restricted_servo2[0] || servo2_current_pos > this->_theta_restricted_servo2[1]) {
-      // WARNING: Starting position of servo 2 is not safe.
-    }
-    if (servo3_current_pos < this->_theta_restricted_servo3[0] || servo3_current_pos > this->_theta_restricted_servo3[1]) {
-      // WARNING: Starting position of servo 3 is not safe.  
-    }
-    return false;
-  }
-  else if (servo2_current_pos < this->_theta_restricted_servo2[0] || servo2_current_pos > this->_theta_restricted_servo2[1]) {
-    // WARNING: Starting position of servo 2 is not safe.
-    if (servo3_current_pos < this->_theta_restricted_servo3[0] || servo3_current_pos > this->_theta_restricted_servo3[1]) {
-      // WARNING: Starting position of servo 3 is not safe. 
-    }
-    return false;
-  }
-  else if (servo3_current_pos < this->_theta_restricted_servo3[0] || servo3_current_pos > this->_theta_restricted_servo3[1]) {
-    // WARNING: Starting position of servo 3 is not safe.
-    return false;
-  }
-  else {
-    // Starting position is safe.
-    return true;
-  }
+
+	if (servo1_current_pos > this->_theta_restricted_servo1[0] || servo1_current_pos < this->_theta_restricted_servo1[1]) {
+		// Starting position of servo 1 is safe.
+		if (servo2_current_pos < this->_theta_restricted_servo2[0]) {
+			// Starting position of servo 2 is safe.
+			if (servo2_current_pos > _theta_restricted_servo2[1] && servo3_current_pos > this->_theta_restricted_servo3) {
+				// Starting position of servo 3 is safe.
+				return false;
+			}else {
+				return true;
+			}
+		}else {
+			return false;
+		}
+	}else {
+		return false;
+	}
 }
 
 
@@ -281,6 +270,10 @@ bool PathPlanning::calculate_path(float servo1_current_pos, float servo2_current
     this->_calculate_deceleration();
     this->_calculate_acceleration_segment_end_theta();
     this->_calculate_deceleration_segment_start_theta();
+
+    for (int i = 0; i < 3; i++){
+      Serial.println(_servo_goal_pos[i]);
+    }
 
     return(true);
 

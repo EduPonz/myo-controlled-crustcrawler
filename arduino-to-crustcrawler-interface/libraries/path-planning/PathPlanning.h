@@ -12,7 +12,6 @@
 
 class PathPlanning{
   public:
-      PathPlanning();
       void time_constant_velocity();
       float dominant_servo_deltaTheta();
       float time_total(float delta_theta);
@@ -32,9 +31,9 @@ class PathPlanning{
       float totalTime = 0;
 
       // CrustCrawler preset positions
-      float home_position[3] = {176, 105.6, 61.6};			// porposal = {176, 61.2, 266.4} 
-      float extended_position[3] = {176, 80, 163.84};
-      float to_user_position[3] = {96, 128, 120};
+      float home_position[3] = {193.6, 67.32, 293.04};			 
+      float extended_position[3] = {193.6, 88, 180.224};
+      float to_user_position[3] = {105.6, 140.8, 132};
       
     
   private:
@@ -58,9 +57,9 @@ class PathPlanning{
       float _servo_current_pos[3];
       
       //Bottom and top angle limits for each servo. TO BE EDITED!!
-      float _theta_restricted_servo1 [2] = {45, 315};
-      float _theta_restricted_servo2 [2] = {1, 100};
-      float _theta_restricted_servo3 [2] = {1, 270};
+      int _theta_restricted_servo1 [2] = {86, 356};
+	    int _theta_restricted_servo2 [2] = {200, 180};
+      int _theta_restricted_servo3 = 128;
     
     
 };
