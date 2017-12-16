@@ -405,7 +405,7 @@ void DynamixelPro2::_transmit_instruction_packet(int transLen){                 
 
   interrupts();
 
-  delay(20);                    // This delay value was orginally 20
+  delay(2);                    // This delay value was orginally 20
 }
 
 unsigned short DynamixelPro2::_update_crc(unsigned char *data_blk_ptr, unsigned short data_blk_size){
