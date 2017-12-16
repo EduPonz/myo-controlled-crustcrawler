@@ -45,7 +45,7 @@ String job_status = JOB_SUCCESS;
 String gesture = dynamixel.UNKNOWN_GESTURE;
 String prev_instruction = "";
 
-unsigned long time = millis();
+unsigned long loopTime = millis();
 unsigned long prev_time = millis();
 
 //unsigned long startTime = 0;
@@ -84,24 +84,25 @@ void loop(){
       send_json();
 
       if (path_status == true){
+        dynamixel.switching_operating_mode(dynamixel.PRE_SET_MODE);
         prev_time = millis();
 
         while (true){
-
+          Serial.println("Control loop");
           //startTime = millis();
           
-          time = millis() - prev_time;
+          loopTime = millis() - prev_time;
 
-          if (time >= SAMPLING_RATE || time == 0){
+          if (loopTime >= SAMPLING_RATE || loopTime == 0){
 
             for (int i = 0; i < 3; ++i){
               servo_error_pos[i] = convert.position_degrees_to_radians(convert.unit_to_degree(dynamixel.read_current_position(i))
-                           - path_planning.get_position_sample(i, time)) * k_p;
+                           - path_planning.get_position_sample(i, loopTime)) * k_p;
 
               servo_error_vel[i] = convert.speed_degrees_to_radians(convert.unit_to_speed_degree(dynamixel.read_current_velocity(i))
-                         - path_planning.get_velocity_sample(i, time)) * k_v;
+                         - path_planning.get_velocity_sample(i, loopTime)) * k_v;
               
-              servo_acc[i] = convert.acceleration_degrees_to_radians(path_planning.get_acceleration_sample(i, time));
+              servo_acc[i] = convert.acceleration_degrees_to_radians(path_planning.get_acceleration_sample(i, loopTime));
             }
 
             dynamics_calculator.set_thetas(servo_error_pos[0], servo_error_pos[1], servo_error_pos[2]);
@@ -113,6 +114,7 @@ void loop(){
 
             for (int i = 0; i < 3; ++i){
               dynamixel.writePWM(i, convert.torque_to_PWM_unit(i, convert.speed_degrees_to_radians(convert.unit_to_speed_degree(dynamixel.read_current_velocity(i))), torque[i]));
+              Serial.println("write PWM okay");
             }
 
             prev_time = millis();
@@ -120,16 +122,20 @@ void loop(){
 
           if (abs(path_planning.get_goal_position(0) - convert.unit_to_degree(dynamixel.read_current_position(0))) < ALLOWED_ERROR){
             first_ok = true;
+            Serial.println("Breaking 1st okay");
           }
           if (abs(path_planning.get_goal_position(1) - convert.unit_to_degree(dynamixel.read_current_position(1))) < ALLOWED_ERROR){
             second_ok = true;
+            Serial.println("Breaking 2nd okay");
           }
           if (abs(path_planning.get_goal_position(2) - convert.unit_to_degree(dynamixel.read_current_position(2))) < ALLOWED_ERROR){
             third_ok = true;
+            Serial.println("Breaking 3rd okay");
           }
           if (first_ok && second_ok && third_ok){
-            dynamixel.write_holding_torque(true);
-            //break;
+            dynamixel.switching_operating_mode(dynamixel.MANUAL_MODE);
+            Serial.println("Breaking the loop");
+            break;
           }
           /*endTime = millis();
           Serial.print("Execution time = ");
