@@ -98,7 +98,7 @@ void loop(){
               servo_error_pos[i] = convert.position_degrees_to_radians(convert.unit_to_degree(dynamixel.read_current_position(i))
                            - path_planning.get_position_sample(i, time)) * k_p;
 
-              servo_error_vel[i] = convert.speed_degrees_to_radians(convert.unit_to_degree(dynamixel.read_current_velocity(i))
+              servo_error_vel[i] = convert.speed_degrees_to_radians(convert.unit_to_speed_degree(dynamixel.read_current_velocity(i))
                          - path_planning.get_velocity_sample(i, time)) * k_v;
               
               servo_acc[i] = convert.acceleration_degrees_to_radians(path_planning.get_acceleration_sample(i, time));
