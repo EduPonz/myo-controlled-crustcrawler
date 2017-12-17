@@ -19,7 +19,7 @@
 #define MODE_DEVEL 3
 #define MODE_EXIT 4
 #define MODE_QUIT 5
-#define COM6 "\\\\.\\COM12"		
+#define COM6 "\\\\.\\COM6"		
 #define DELAY_OF_ONE_SEC std::this_thread::sleep_for(std::chrono::milliseconds(1000))
 #define DELAY_OF_1500_MS std::this_thread::sleep_for(std::chrono::milliseconds(1500))
 
@@ -31,13 +31,13 @@ MyoData::MyoData() {
 	manual_mode_state_ = false;
 	json_id_ = 0;
 	output_json_file.open("output_json_file.txt");
-	inc_json_file.open("inc_json_file.txt");	
+	inc_json_file.open("inc_json_file.txt");
 	arduino_obj_ = new SerialPort(COM6);
 	prev_pose = "rest";
 
 	now_construct = time(nullptr);
 
-	string mode;	
+	/*string mode;
 	cout << "Press 'd' and 'Enter' to go into developer mode or 'n' and 'Enter' to go to normal. \n";
 	cin >> mode;
 
@@ -51,12 +51,13 @@ MyoData::MyoData() {
 		cin >> gesture;
 
 		populateJson(myo_mode, gesture);
-	}else
-		connectToMyo();	
+	}
+	else
+		connectToMyo();*/
 }
 
 int MyoData::connectToMyo()
-{	
+{
 	currentPose = myo::Pose::rest;
 	myo::Hub hub("com.project.myo_project");
 
@@ -65,10 +66,9 @@ int MyoData::connectToMyo()
 
 	int atemps = 0;
 	myo::Myo* myo = hub.waitForMyo(10000);
-	while (!myo && atemps < 5){
-		if (!myo){
+	while (!myo && atemps < 5) {
+		if (!myo) {
 			throw runtime_error("Unable to find a Myo!");
-			exit(0);
 			cout << atemps << "Unable to find a Myo! \n";
 		}
 		atemps++;
@@ -83,7 +83,7 @@ int MyoData::connectToMyo()
 		DELAY_OF_ONE_SEC;
 		DELAY_OF_ONE_SEC;
 		while (1) {
-			hub.run(1000 / 25);		
+			hub.run(1000 / 25);
 			mode_type_ = switchModes();
 
 			if (mode_type_ == MODE_MANUAL || mode_type_ == MODE_PRESET || mode_type_ == MODE_DEVEL || mode_type_ == MODE_QUIT)
@@ -93,11 +93,11 @@ int MyoData::connectToMyo()
 		DELAY_OF_ONE_SEC;
 		DELAY_OF_ONE_SEC;
 
-		if (mode_type_ == MODE_MANUAL || mode_type_ == MODE_PRESET || mode_type_ == MODE_DEVEL || mode_type_ == MODE_QUIT){
+		if (mode_type_ == MODE_MANUAL || mode_type_ == MODE_PRESET || mode_type_ == MODE_DEVEL || mode_type_ == MODE_QUIT) {
 
-			if (mode_type_ == MODE_MANUAL){
+			if (mode_type_ == MODE_MANUAL) {
 
-				while (true){
+				while (true) {
 
 					hub.run(1000 / 20);
 					mode_type_ = manualMode();
@@ -105,41 +105,44 @@ int MyoData::connectToMyo()
 					if (mode_type_ == MODE_EXIT)
 						break;
 				}
-			} else if (mode_type_ == MODE_PRESET){
+			}
+			else if (mode_type_ == MODE_PRESET) {
 
-				while (true){
+				while (true) {
 					hub.run(1000 / 20);
 					mode_type_ = presetMode();
 
 					if (mode_type_ == MODE_EXIT)
 						break;
 				}
-			} else if (mode_type_ == MODE_DEVEL){
+			}
+			else if (mode_type_ == MODE_DEVEL) {
 
-				while (true){
+				while (true) {
 					hub.run(1000 / 20);
 					mode_type_ = developerMode();
 
 					if (mode_type_ == MODE_EXIT)
 						break;
 				}
-			} else if (mode_type_ == MODE_QUIT){
+			}
+			else if (mode_type_ == MODE_QUIT) {
 				exit(0);
 			}
-		}	
+		}
 	}
 }
 
 void MyoData::onPose(myo::Myo* myo, uint64_t timestamp, myo::Pose pose) {
 	currentPose = pose;
-	isUnlocked = false;	
+	isUnlocked = false;
 
 	myo->unlock(myo::Myo::unlockHold);
-	
+
 	myo->notifyUserAction();
 }
 
-int MyoData::returnGestureNumber(string p_inc_gesture) {	
+int MyoData::returnGestureNumber(string p_inc_gesture) {
 
 	int gesture_number_ = 0;
 
@@ -167,32 +170,32 @@ int MyoData::returnGestureNumber(string p_inc_gesture) {
 		gesture_number_ = 6;
 		return gesture_number_;
 	}
-	else {		
+	else {
 		gesture_number_ = 0;
 		return gesture_number_;
 	}
 }
 
 int MyoData::switchModes() {
-	
-	gesture_number_ = 0;	
-	
+
+	gesture_number_ = 0;
+
 	switch (gesture_number_ = returnGestureNumber(currentPose.toString())) {
-	case 1:  
+	case 1:
 		std::cout << '\r';
-		cout << "You choose: 'Manual Mode'" << string(65, ' ');		
+		cout << "You choose: 'Manual Mode'" << string(65, ' ');
 		return MODE_MANUAL;
 		break;
 
 	case 2:
 		std::cout << '\r';
-		cout << "You choose: 'Preset Mode'" << string(65, ' ');		
+		cout << "You choose: 'Preset Mode'" << string(65, ' ');
 		return MODE_PRESET;
 		break;
 
-	/*case 3:
+		/*case 3:
 		std::cout << '\r';
-		cout << "You choose: 'Developer Mode'" << string(55, ' ');		
+		cout << "You choose: 'Developer Mode'" << string(55, ' ');
 		return MODE_DEVEL;
 		break;*/
 
@@ -202,7 +205,7 @@ int MyoData::switchModes() {
 		return MODE_QUIT;
 		break;
 
-	default:		
+	default:
 		std::cout << '\r';
 		cout << "FIST: Manual Mode, " << "SPREAD: Preset Mode, " << "WAVEIN: Developer Mode, " << "DOUBLETAP: Quit." << string(10, ' ');
 		break;
@@ -211,12 +214,12 @@ int MyoData::switchModes() {
 
 int MyoData::manualMode() {
 
-	if (prev_pose != currentPose.toString() || manual_mode_state_ == false){
+	if (prev_pose != currentPose.toString() || manual_mode_state_ == false) {
 		manual_mode_state_ = true;
 		prev_pose = currentPose.toString();
 		gesture_number_ = 0;
 		mode_type_ = MODE_MANUAL;
-		switch (gesture_number_ = returnGestureNumber(currentPose.toString())){
+		switch (gesture_number_ = returnGestureNumber(currentPose.toString())) {
 		case 1:
 			std::cout << '\r';
 			cout << "FIST: Moving end effector: DOWN" << string(65, ' ');
@@ -266,11 +269,11 @@ int MyoData::presetMode() {
 
 	gesture_number_ = 0;
 	mode_type_ = MODE_PRESET;
-	
-	switch(gesture_number_ = returnGestureNumber(currentPose.toString())) {
+
+	switch (gesture_number_ = returnGestureNumber(currentPose.toString())) {
 	case 1:
 		std::cout << '\r';
-		cout << "Closing gripper." << string(100, ' ');
+		cout << "Opening/Closing the gripper." << string(100, ' ');
 		populateJson(mode_type_, currentPose.toString());
 		break;
 
@@ -319,41 +322,40 @@ int MyoData::developerMode() {
 void MyoData::populateJson(int p_mode, string p_gesture) {
 
 	json_id_++;
-	json pose_json_;			
+	json pose_json_;
 
 	pose_json_ = {
 		{ "id", json_id_ },
 		{ "mode", p_mode },
 		{ "gesture", p_gesture }
 	};
-	output_json_ = pose_json_.dump();	
+	output_json_ = pose_json_.dump();
 	jsonHandler(output_json_, p_mode);
-	
+
 }
 
 void MyoData::saveJson(string p_json) {
 
 	time_t time_stamp = returnCurrTime();
-	
 	output_json_file << time_stamp << " -> " << p_json << "\n";
 }
 
 void MyoData::saveIncJson(string p_json) {
 
 	time_t time_stamp = returnCurrTime();
-
 	inc_json_file << time_stamp << " -> " << p_json << "\n";
 }
 
-void MyoData::jsonHandler(string output_json, int mode_type){
+void MyoData::jsonHandler(string output_json, int mode_type) {
 
 	string response_from_robot = "";
-	if (mode_type == MODE_MANUAL){
+	if (mode_type == MODE_MANUAL) {
 
 		saveJson(output_json);
 		sendToSerial(output_json);
 
-	} else if (mode_type == MODE_PRESET){
+	}
+	else if (mode_type == MODE_PRESET) {
 
 		saveJson(output_json);
 		sendToSerial(output_json);
@@ -362,13 +364,13 @@ void MyoData::jsonHandler(string output_json, int mode_type){
 		bool empty_response = false;
 		unsigned long start_time = std::time(nullptr);
 
-		while ((response_from_robot == "") && ((std::time(nullptr) - start_time) < 15)){
+		while ((response_from_robot == "") && ((std::time(nullptr) - start_time) < 7)) {
 			cout << '\r';
 			cout << "Waiting for response from the robot.." << string(65, ' ');
 
 			response_from_robot = recieveFromSerial();
 
-			if (response_from_robot != ""){
+			if (response_from_robot != "") {
 				stringstream response;
 				response << "MyoData::jsonHandler -> " << response_from_robot << "\n";
 				OutputDebugStringA(response.str().c_str());
@@ -376,22 +378,24 @@ void MyoData::jsonHandler(string output_json, int mode_type){
 				stringstream to_json;
 				to_json << response_from_robot;
 
-				try{
+				try {
 					json incoming_json = json::parse(to_json);
 					OutputDebugString(L"MyoData::jsonHandler -> Successful parsing to Json \n");
 
-					if (incoming_json ["job status"] == "success"){
+					/*if (incoming_json["job status"] == "success") {
 						cout << "\r";
 						cout << "Response is ok! Job succeeded! \n";
 						empty_response = true;
 						OutputDebugString(L"MyoData::jsonHandler -> job status = success \n");
-					} else{
+					}
+					else {
 						cout << '\r';
 						cout << "Response is ok! Job failed! \n";
 						OutputDebugString(L"MyoData::jsonHandler -> job status = failed \n");
-					}
+					}*/
 
-				} catch (const std::exception& e){
+				}
+				catch (const std::exception& e) {
 					cout << "\r";
 					cout << "Incomprehensible robot response \n";
 					stringstream exception;
@@ -412,7 +416,7 @@ void MyoData::sendToSerial(string p_output_json) {
 	if (arduino_obj_->isConnected()) {
 
 		bool has_written = arduino_obj_->writeSerialPort(output_serial_, DATA_LENGTH);
-		
+
 		if (has_written) {
 
 			now_serial_read = time(nullptr);
@@ -420,9 +424,10 @@ void MyoData::sendToSerial(string p_output_json) {
 			stringstream msg;
 			msg << "MyoData::sendToSerial -> " << output_serial_ << "\n";
 			OutputDebugStringA(msg.str().c_str());
-			cout << "\nMyoData:sendToSerial -> " << output_serial_ << "\n";
+			//cout << "\nMyoData:sendToSerial -> " << output_serial_ << "\n";
 
-		} else{
+		}
+		else {
 			OutputDebugString(L"MyoData::sendToSerial -> Data not sent \n");
 		}
 	}
@@ -430,56 +435,56 @@ void MyoData::sendToSerial(string p_output_json) {
 
 string MyoData::recieveFromSerial() {
 
-	char recieved_char [DATA_LENGTH_OF_1];
+	char recieved_char[DATA_LENGTH_OF_1];
 	string received_string = "";
 	string complete_string = "";
 	string complete_answer = "";
 
-	if (arduino_obj_->isConnected()){
+	if (arduino_obj_->isConnected()) {
 
 		int has_read = arduino_obj_->readSerialPort(recieved_char, DATA_LENGTH_OF_1);
 		received_string.assign(recieved_char, DATA_LENGTH_OF_1);
 
-		if (received_string != "{"){
-			do{
+		if (received_string != "{") {
+			do {
 				has_read = arduino_obj_->readSerialPort(recieved_char, DATA_LENGTH_OF_1);
 
-				if (has_read){
+				if (has_read) {
 					received_string.assign(recieved_char, DATA_LENGTH_OF_1);
 					complete_answer.append(received_string);
 				}
-			} while ((recieved_char [0] != '{') && has_read);
+			} while ((recieved_char[0] != '{') && has_read);
 		}
 
-		if (received_string == "{"){
+		if (received_string == "{") {
 
 			complete_string.append(received_string);
 			complete_answer.append(received_string);
 
-			do{
+			do {
 				has_read = arduino_obj_->readSerialPort(recieved_char, DATA_LENGTH_OF_1);
 
-				if (has_read){
+				if (has_read) {
 					received_string.assign(recieved_char, DATA_LENGTH_OF_1);
 					complete_string.append(received_string);
 					complete_answer.append(received_string);
 				}
 
-			} while (recieved_char [0] != '}');
+			} while (recieved_char[0] != '}');
 
 			saveIncJson(complete_string);
 			stringstream msg;
 			msg << "MyoData::recieveFromSerial JSON -> " << complete_string << "\n";
 			OutputDebugStringA(msg.str().c_str());
-			cout << "\r";
-			cout << "MyoData::recieveFromSerial JSON -> " << complete_string << "\n";
+			//cout << "\r";
+			//cout << "MyoData::recieveFromSerial JSON -> " << complete_string << "\n";
 		}
 
-		if (received_string == "}"){
-			do{
+		if (received_string == "}") {
+			do {
 				has_read = arduino_obj_->readSerialPort(recieved_char, DATA_LENGTH_OF_1);
 
-				if (has_read){
+				if (has_read) {
 					received_string.assign(recieved_char, DATA_LENGTH_OF_1);
 					complete_answer.append(received_string);
 				}
@@ -490,14 +495,14 @@ string MyoData::recieveFromSerial() {
 			stringstream msg;
 			msg << "MyoData::recieveFromSerial ANSWER -> " << complete_answer << "\n";
 			OutputDebugStringA(msg.str().c_str());
-			cout << "\r";
-			cout << "MyoData::recieveFromSerial ANSWER -> " << complete_answer << "\n";
+			//cout << "\r";
+			//cout << "MyoData::recieveFromSerial ANSWER -> " << complete_answer << "\n";
 		}
 	}
 	return complete_string;
 }
 
-time_t MyoData::returnCurrTime(){
+time_t MyoData::returnCurrTime() {
 
 	auto curr_time = std::chrono::system_clock::now();
 
