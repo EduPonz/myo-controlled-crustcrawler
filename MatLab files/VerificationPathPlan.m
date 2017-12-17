@@ -12,7 +12,7 @@ syms vel3(t);
 %% Movement parameters %%
 
 TimeAcc = 0.25; %time for acceleration
-MaxAcc = 140; %Maximum acceleration
+MaxAcc = 140; %Maximum acceleration (deg/s)
 MaxVel = TimeAcc * MaxAcc;
 
 %% Start and End Positions %%
@@ -97,9 +97,17 @@ function DominantDelta = DominantJointDelta(CurrentPos, GoalPos);
 end
 
 %Determines the total time for all movements
-function TotalTime = timeTotal(deltaTheta, timeAcc, maxAcc);
-    if ((deltaTheta + maxAcc*timeAcc*timeAcc)/(maxAcc*timeAcc) > 2*timeAcc)
-    TotalTime = (deltaTheta + maxAcc*timeAcc^2)/(maxAcc*timeAcc);
+%function TotalTime = timeTotal(deltaTheta, timeAcc, maxAcc);
+   % if ((deltaTheta + maxAcc*timeAcc*timeAcc)/(maxAcc*timeAcc) > 2*timeAcc)
+    %TotalTime = (deltaTheta + maxAcc*timeAcc^2)/(maxAcc*timeAcc);
+    %else
+    %TotalTime = 2*timeAcc;    
+    %end
+%end
+
+function TotalTime = timeTotal(deltaTheta, timeAcc, maxVel);
+    if ((deltaTheta / maxVel) + timeAcc  > 2*timeAcc)
+    TotalTime = deltaTheta / maxVel + timeAcc;
     else
     TotalTime = 2*timeAcc;    
     end
@@ -122,7 +130,7 @@ Acceleration = [0,0,0];
         if Tf == 2*TimeAcc
             Acceleration(m) =  DeltaTheta(m)/(TimeAcc^2);
         else 
-            Acceleration(m) =  DeltaTheta(m)/(TimeAcc*(Tf - TimeAcc));
+            Acceleration(m) =  (DeltaTheta(m)/(Tf - TimeAcc))/TimeAcc;
         end
         if GoalPos(m) < CurrentPos(m)
             Acceleration(m) = -Acceleration(m);
@@ -144,6 +152,7 @@ function [x,y,z] = omegavector(Accelerations, TimeAcc)
  z = vector(3);
  
 end
+
 %Calculates position at the end of acceleration period
 function [x,y,z] = AccelerationBlendEnd(Accelerations, TimeAcc, CurrentPos);
     for n = 1:3
@@ -182,8 +191,8 @@ function PlotVelocity(Accelerations, Tf, AccTime);
 syms vel1(t);
 syms vel2(t);
 syms vel3(t);
-    vel1(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(1)*t ,AccTime<=t<(Tf - AccTime), Accelerations(1)*AccTime, (Tf - AccTime)<=t<Tf, AccTime*Accelerations(1) - Accelerations(1)*(t-Tf+AccTime) ,t>=Tf , 0);
-    vel2(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(2)*t ,AccTime<=t<(Tf - AccTime), Accelerations(2)*AccTime, (Tf - AccTime)<=t<Tf, AccTime*Accelerations(2) - Accelerations(2)*(t-Tf+AccTime) ,t>=Tf , 0);
+    vel1(t) = piecewise(t<0, 0,0<= t<AccTime, Accelerations(1)*t ,AccTime<=t<(Tf - AccTime), Accelerations(1)*AccTime, (Tf - AccTime)<=t<Tf, AccTime*Accelerations(1) - Accelerations(1)*(t-Tf+AccTime) ,t>=Tf , 0);
+    vel2(t) = piecewise(t<0, 0,0<= t<AccTime, Accelerations(2)*t ,AccTime<=t<(Tf - AccTime), Accelerations(2)*AccTime, (Tf - AccTime)<=t<Tf, AccTime*Accelerations(2) - Accelerations(2)*(t-Tf+AccTime) ,t>=Tf , 0);
     vel3(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(3)*t ,AccTime<=t<(Tf - AccTime), Accelerations(3)*AccTime, (Tf - AccTime)<=t<Tf, AccTime*Accelerations(3) - Accelerations(3)*(t-Tf+AccTime) ,t>=Tf , 0);
 
 figure(1)
@@ -193,7 +202,7 @@ fplot(vel3);
 xlabel('Time, s');
 hl = ylabel('Angular velocity $\dot{\theta}$, deg / s')
 set(hl, 'Interpreter', 'latex');
-axis([0 Tf -60 60])
+axis([0 Tf -150 150])
 end
 
 function PlotAcc (Accelerations, Tf, AccTime, CurrentPos, MaxVel, GoalPos);
@@ -210,7 +219,7 @@ figure(2)
 fplot(theta1); hold on;
 fplot(theta2); hold on;
 fplot(theta3);
-%xlabel('Time, s')
-%ylabel('Position \theta, deg')
+xlabel('Time, s')
+ylabel('Position \theta, deg')
 axis([0 Tf 0 135])
 end
