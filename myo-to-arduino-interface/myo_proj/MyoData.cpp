@@ -68,6 +68,7 @@ int MyoData::connectToMyo()
 	while (!myo && atemps < 5){
 		if (!myo){
 			throw runtime_error("Unable to find a Myo!");
+			exit(0);
 			cout << atemps << "Unable to find a Myo! \n";
 		}
 		atemps++;
@@ -331,13 +332,17 @@ void MyoData::populateJson(int p_mode, string p_gesture) {
 }
 
 void MyoData::saveJson(string p_json) {
+
+	time_t time_stamp = returnCurrTime();
 	
-	output_json_file << p_json << "\n";
+	output_json_file << time_stamp << " -> " << p_json << "\n";
 }
 
 void MyoData::saveIncJson(string p_json) {
 
-	inc_json_file << p_json << "\n";
+	time_t time_stamp = returnCurrTime();
+
+	inc_json_file << time_stamp << " -> " << p_json << "\n";
 }
 
 void MyoData::jsonHandler(string output_json, int mode_type){
@@ -492,19 +497,14 @@ string MyoData::recieveFromSerial() {
 	return complete_string;
 }
 
-/*string MyoData::returnCurrTime() {
+time_t MyoData::returnCurrTime(){
 
-	time_t curr_time;
-	tm * curr_tm;
-	char date_string[100];
-	char time_string[100];
+	auto curr_time = std::chrono::system_clock::now();
 
-	time(&curr_time);
-	curr_tm = localtime(&curr_time);	
-	strftime(time_string, 50, "Current time is %T", curr_tm);
+	std::time_t timestamp = std::chrono::system_clock::to_time_t(curr_time);
 
-	return curr_tm;
-}*/
+	return timestamp;
+}
 
 MyoData::~MyoData() {
 	inc_json_file.close();
