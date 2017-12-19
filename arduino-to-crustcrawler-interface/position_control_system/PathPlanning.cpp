@@ -87,7 +87,7 @@ float PathPlanning::dominant_servo_deltaTheta(){
 float PathPlanning::time_total(float delta_theta){
   
   if ((delta_theta / (this->_THETA_2_DOT * this->_TIME_OF_ACCELERATION) + this->_TIME_OF_ACCELERATION) > 2 * this->_TIME_OF_ACCELERATION ){
-    this->totalTime = (delta_theta / (this->_THETA_2_DOT * this->_TIME_OF_ACCELERATION) + this->_TIME_OF_ACCELERATION);
+      this->totalTime = (delta_theta + this->_THETA_2_DOT * this->_TIME_OF_ACCELERATION)/ this->_THETA_2_DOT * this->_TIME_OF_ACCELERATION;
     return(this->totalTime);
   }else{
     this->totalTime = 2 * this->_TIME_OF_ACCELERATION;
@@ -127,12 +127,8 @@ float PathPlanning::get_position_sample(int servo_id, float sampleTime_milliSec)
           decelerationTravel = 0;
      }
   
-     if(this->servo_acceleration[servo_id] >= 0){
-          return(accelerationTravel + velocityTravel + decelerationTravel + this->_servo_current_pos[servo_id]);
-     }else{
-          return(this->_servo_current_pos[servo_id] - accelerationTravel - velocityTravel - decelerationTravel);
-     }
      
+          return(accelerationTravel + velocityTravel + decelerationTravel + this->_servo_current_pos[servo_id]);    
 }
 
 
