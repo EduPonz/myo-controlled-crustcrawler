@@ -17,9 +17,9 @@ MaxVel = TimeAcc * MaxAcc;
 
 %% Start and End Positions %%
 
-StartSer1 = 90;
+StartSer1 = 58;
 StartSer2 = 92;
-StartSer3 = 2;
+StartSer3 = 108.75;
 CurrentPos = [StartSer1, StartSer2, StartSer3];
 
 Goal = 1; %1 for "home", 2 for "extended", 3 for "to user" 
@@ -60,7 +60,7 @@ end
 PrimeJointDelta = DominantJointDelta(CurrentPos, GoalPos);
 
 %Calculates the total time for all movements
-Tf = timeTotal(PrimeJointDelta, TimeAcc, MaxAcc);
+Tf = timeTotal(PrimeJointDelta, TimeAcc, MaxAcc)
 
 %Calculates the time for keeping constant velocity for all movements
 VelTime = TimeConstantVel(Tf, TimeAcc);
@@ -81,19 +81,27 @@ AccEndPos = [acb1, acb2, acb3];
 [dcb1, dcb2, dcb3] = DecelerationBlendStart(Accelerations, TimeAcc, AccEndPos, VelTime);
 AccEndPos = [dcb1, dcb2, dcb3];
 
-SampleTime = 1;
-[acS,veS,dcS] = SamplePos(Tf, Accelerations, TimeAcc, CurrentPos, VelTime, SampleTime);
-SamplePosition = [acS,veS,dcS];
+SampleTime =0.5;
+%Get the position of the three servos at the above specified sampling time
+[poss1,poss2,poss3] = SamplePos(Tf, Accelerations, TimeAcc, CurrentPos, VelTime, SampleTime, MaxVel);
+SamplePosition = [poss1,poss2,poss3];
+
+%Get the velocity of the three servos at the above specified sampling time
+[vels1,vels2,vels3] = SampleVel(Tf, Accelerations, TimeAcc, VelTime, SampleTime);
+SampleVelocity = [vels1,vels2,vels3];
+
+[accs1,accs2,accs3] = SampleAcc( Accelerations, TimeAcc, VelTime, SampleTime);
+SampleAcceleration = [accs1,accs2,accs3];
 
 close all;
-PlotVelocity(Accelerations, Tf, TimeAcc);
-PlotAcc (Accelerations, Tf, TimeAcc, CurrentPos, MaxVel, GoalPos);
+PlotVelocity(Accelerations, Tf, TimeAcc,SampleTime, SampleVelocity);
+PlotAcc (Accelerations, Tf, TimeAcc, CurrentPos, MaxVel, GoalPos, SampleTime, SamplePosition);
 
 
 %% Functions %%
 
 %Determines the longest angular distance from all jojnts
-function DominantDelta = DominantJointDelta(CurrentPos, GoalPos);
+function DominantDelta = DominantJointDelta(CurrentPos, GoalPos)
     for n = 1:3
    DeltaTheta(n) = abs(GoalPos(n) - CurrentPos(n));
     end
@@ -101,7 +109,7 @@ function DominantDelta = DominantJointDelta(CurrentPos, GoalPos);
 end
 
 %Determines the total time for all movements
-function TotalTime = timeTotal(deltaTheta, timeAcc, maxAcc);
+function TotalTime = timeTotal(deltaTheta, timeAcc, maxAcc)
     if ((deltaTheta + maxAcc*timeAcc*timeAcc)/(maxAcc*timeAcc) > 2*timeAcc)
     TotalTime = (deltaTheta + maxAcc*timeAcc^2)/(maxAcc*timeAcc);
     else
@@ -110,7 +118,7 @@ function TotalTime = timeTotal(deltaTheta, timeAcc, maxAcc);
 end
 
 %Calculates the time for constant velocity
-function Tvmax = TimeConstantVel(totalTime, timeAcc);
+function Tvmax = TimeConstantVel(totalTime, timeAcc)
     if totalTime == 2*timeAcc
         Tvmax = 0;
     else 
@@ -119,7 +127,7 @@ function Tvmax = TimeConstantVel(totalTime, timeAcc);
 end
 
 %Calculates the accelerations of the servos and puts them into an array
-function [x,y,z] = Acc(CurrentPos, GoalPos, Tf, TimeAcc);
+function [x,y,z] = Acc(CurrentPos, GoalPos, Tf, TimeAcc)
 Acceleration = [0,0,0];
      for m = 1:3
         DeltaTheta(m) = abs(GoalPos(m) - CurrentPos(m));    
@@ -149,7 +157,7 @@ function [x,y,z] = omegavector(Accelerations, TimeAcc)
  
 end
 %Calculates position at the end of acceleration period
-function [x,y,z] = AccelerationBlendEnd(Accelerations, TimeAcc, CurrentPos);
+function [x,y,z] = AccelerationBlendEnd(Accelerations, TimeAcc, CurrentPos)
     for n = 1:3
         Displacement(n) = abs(1/2*Accelerations(n)*TimeAcc^2);
         
@@ -165,7 +173,7 @@ function [x,y,z] = AccelerationBlendEnd(Accelerations, TimeAcc, CurrentPos);
 end
  
 %Calculates position at the beginning of deceleration part
-function [x,y,z] = DecelerationBlendStart(Accelerations, TimeAcc, AccEndPos, VelTime);
+function [x,y,z] = DecelerationBlendStart(Accelerations, TimeAcc, AccEndPos, VelTime)
     for n = 1:3
         Displacement(n) = abs(Accelerations(n)*TimeAcc*VelTime);
         
@@ -181,7 +189,7 @@ function [x,y,z] = DecelerationBlendStart(Accelerations, TimeAcc, AccEndPos, Vel
 end
 
 %Calculate and plot velocity as a function of time
-function PlotVelocity(Accelerations, Tf, AccTime);
+function PlotVelocity(Accelerations, Tf, AccTime,SampleTime, SampleVelocity)
 
 syms vel1(t);
 syms vel2(t);
@@ -193,14 +201,17 @@ syms vel3(t);
 figure(1)
 fplot(vel1); hold on;
 fplot(vel2); hold on;
-fplot(vel3);
+fplot(vel3); hold on;
+plot(SampleTime, SampleVelocity(1),'r*'); hold on;
+plot(SampleTime, SampleVelocity(2),'r*'); hold on;
+plot(SampleTime, SampleVelocity(3),'r*');
 xlabel('Time, s');
 hl = ylabel('Angular velocity $\dot{\theta}$, deg / s')
 set(hl, 'Interpreter', 'latex');
 axis([0 Tf -60 60])
 end
 
-function PlotAcc (Accelerations, Tf, AccTime, CurrentPos, MaxVel, GoalPos);
+function PlotAcc (Accelerations, Tf, AccTime, CurrentPos, MaxVel, GoalPos, SampleTime, SamplePosition)
 
 syms theta1(t);
 syms theta2(t);
@@ -213,13 +224,16 @@ theta3(t) = piecewise( t<0, CurrentPos(3), 0<= t<AccTime, CurrentPos(3) + 1/2*Ac
 figure(2)
 fplot(theta1); hold on;
 fplot(theta2); hold on;
-fplot(theta3);
-%xlabel('Time, s')
-%ylabel('Position \theta, deg')
+fplot(theta3); hold on;
+plot(SampleTime, SamplePosition(1),'r*'); hold on;
+plot(SampleTime, SamplePosition(2),'r*'); hold on;
+plot(SampleTime, SamplePosition(3),'r*'); 
+xlabel('Time, s')
+ylabel('Position \theta, deg')
 axis([0 Tf 0 135])
 end
 
-function [x,y,z] = SamplePos(Tf, Accelerations, TimeAcc, CurrentPos, VelTime, SampleTime);
+function [x,y,z] = SamplePos(Tf, Accelerations, TimeAcc, CurrentPos, VelTime, SampleTime, MaxVel)
    AccS =[0,0,0];
    VelS =[0,0,0];
    DecS =[0,0,0];
@@ -227,22 +241,22 @@ function [x,y,z] = SamplePos(Tf, Accelerations, TimeAcc, CurrentPos, VelTime, Sa
        
     for n = 1:3
        if SampleTime <= TimeAcc
-          AccS(n) =Accelerations(n)*SampleTime*SampleTime;
+          AccS(n) =1/2*Accelerations(n)*SampleTime*SampleTime
        else 
-          AccS(n) = Accelerations(n)*TimeAcc*TimeAcc;
+          AccS(n) = 1/2*Accelerations(n)*TimeAcc*TimeAcc;
        end
        
-       if (VelTime >0) && (SampleTime <= VelTime + TimeAcc)
+       if (VelTime >0) && (SampleTime <= VelTime + TimeAcc) && (SampleTime > TimeAcc)
            VelS(n) = Accelerations(n)*TimeAcc*(SampleTime - TimeAcc);
-       elseif (VelTime >0) && (SampleTime > VelTime + TimeAcc)
+       elseif (VelTime > 0)&&(SampleTime > VelTime+TimeAcc)
            VelS(n) = Accelerations(n)*TimeAcc*VelTime;
-       else 
+       else
             VelS(n) = 0;
        end
           
           
        if SampleTime > Tf - TimeAcc
-           DecS(n) = 1/2*(Accelerations(n)*(SampleTime - (Tf - TimeAcc))^2);
+            DecS(n) = MaxVel(n)*(SampleTime-(Tf - TimeAcc))-1/2*(Accelerations(n))*(SampleTime - (Tf - TimeAcc))*(SampleTime - (Tf - TimeAcc));
        else 
            DecS(n) = 0;
        end
@@ -254,3 +268,36 @@ x = sampos(1);
 y = sampos(2);
 z = sampos(3);
 end
+
+  function [x,y,z] = SampleVel(Tf, Accelerations, TimeAcc, VelTime, SampleTime)    
+  vel = [0,0,0];
+  for n = 1:3
+     if SampleTime <= TimeAcc
+         vel(n) = Accelerations(n)*SampleTime;
+     elseif (VelTime > 0) && (SampleTime <= VelTime + TimeAcc) && (SampleTime > TimeAcc)
+         vel(n) = Accelerations(n)*TimeAcc;
+     else
+         vel(n) = Accelerations(n)*TimeAcc - Accelerations(n)*(SampleTime - Tf + TimeAcc); 
+     end
+  end
+  x =  vel(1);
+  y =  vel(2);
+  z =  vel(3);
+  end
+  
+   function [x,y,z] = SampleAcc(Accelerations, TimeAcc, VelTime, SampleTime)    
+  acc = [0,0,0];
+  for n = 1:3
+     if SampleTime <= TimeAcc
+         acc(n) = Accelerations(n);
+     elseif (VelTime > 0) && (SampleTime <= VelTime + TimeAcc) && (SampleTime > TimeAcc)
+         acc(n) = 0;
+     else
+         acc(n) = - Accelerations(n); 
+     end
+  end
+  x =  acc(1);
+  y =  acc(2);
+  z =  acc(3);
+  end
+  
