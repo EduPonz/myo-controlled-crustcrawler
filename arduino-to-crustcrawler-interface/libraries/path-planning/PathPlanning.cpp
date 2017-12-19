@@ -120,9 +120,7 @@ float PathPlanning::get_position_sample(int servo_id, float sampleTime_milliSec)
      }
     
      if(sampleTime > (this->totalTime - this->_TIME_OF_ACCELERATION)){
-          decelerationTravel = 0.5 * ((this->servo_acceleration[servo_id]) * ((sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION)) * (sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION))));
-    //}else if(this->constantVelocityTime = 0 && sampleTime > this->_TIME_OF_ACCELERATION){
-        // decelerationTravel = 0.5 * ((this->servo_acceleration[servo_id]) * ((sampleTime - this->_TIME_OF_ACCELERATION) * (sampleTime - this->_TIME_OF_ACCELERATION)));
+          decelerationTravel = (this->servo_acceleration[servo_id])*(this->_TIME_OF_ACCELERATION)*(sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION)) + 0.5 * ((-this->servo_acceleration[servo_id]) * ((sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION)) * (sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION))));
      }else{
           decelerationTravel = 0;
      }
