@@ -87,7 +87,7 @@ float PathPlanning::dominant_servo_deltaTheta(){
 float PathPlanning::time_total(float delta_theta){
   
   if ((delta_theta / (this->_THETA_2_DOT * this->_TIME_OF_ACCELERATION) + this->_TIME_OF_ACCELERATION) > 2 * this->_TIME_OF_ACCELERATION ){
-      this->totalTime = (delta_theta + this->_THETA_2_DOT * this->_TIME_OF_ACCELERATION)/ this->_THETA_2_DOT * this->_TIME_OF_ACCELERATION;
+    this->totalTime = (delta_theta / (this->_THETA_2_DOT * this->_TIME_OF_ACCELERATION) + this->_TIME_OF_ACCELERATION);
     return(this->totalTime);
   }else{
     this->totalTime = 2 * this->_TIME_OF_ACCELERATION;
@@ -127,8 +127,12 @@ float PathPlanning::get_position_sample(int servo_id, float sampleTime_milliSec)
           decelerationTravel = 0;
      }
   
+     if(this->servo_acceleration[servo_id] >= 0){
+          return(accelerationTravel + velocityTravel + decelerationTravel + this->_servo_current_pos[servo_id]);
+     }else{
+          return(this->_servo_current_pos[servo_id] - accelerationTravel - velocityTravel - decelerationTravel);
+     }
      
-          return(accelerationTravel + velocityTravel + decelerationTravel + this->_servo_current_pos[servo_id]);    
 }
 
 
@@ -140,13 +144,13 @@ float PathPlanning::get_velocity_sample(int servo_id, float sampleTime_milliSec)
     float sampleTime = sampleTime_milliSec / 1000;
 
     if(sampleTime <= this->_TIME_OF_ACCELERATION){
-          velocity = 0.5 * this->servo_acceleration[servo_id] * sampleTime;
+          velocity = this->servo_acceleration[servo_id] * sampleTime;
           return(velocity);
     }else if(this->constantVelocityTime > 0 && sampleTime <= (this->constantVelocityTime + this->_TIME_OF_ACCELERATION) && sampleTime > this->_TIME_OF_ACCELERATION) {
           velocity = (this->servo_acceleration[servo_id] * this->_TIME_OF_ACCELERATION);
           return(velocity);
     }else if(sampleTime > (this->totalTime - this->_TIME_OF_ACCELERATION) && sampleTime > this->_TIME_OF_ACCELERATION){
-          velocity = (0.5 * this->servo_acceleration[servo_id] * this->_TIME_OF_ACCELERATION) - 0.5 * this->servo_acceleration[servo_id] * (sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION));
+          velocity = (this->servo_acceleration[servo_id] * this->_TIME_OF_ACCELERATION) - this->servo_acceleration[servo_id] * (sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION));
           return(velocity);
     }
   
@@ -220,7 +224,7 @@ bool PathPlanning::starting_angle_warning(float servo1_current_pos, float servo2
 		// Starting position of servo 1 is safe.
 		if (servo2_current_pos < this->_theta_restricted_servo2[0]) {
 			// Starting position of servo 2 is safe.
-			if (servo2_current_pos > _theta_restricted_servo2[1] && servo3_current_pos > this->_theta_restricted_servo3) {
+			if (servo2_current_pos > _theta_restricted_servo2[1] && servo3_current_pos > _theta_restricted_servo3[0]) {
 				// Starting position of servo 3 is safe.
 				return true;
 			}else {
@@ -264,18 +268,11 @@ bool PathPlanning::calculate_path(float servo1_current_pos, float servo2_current
     this->time_constant_velocity();
 
     this->_calculate_acceleration();
-	this->_calculate_velocity();
+    this->_calculate_deceleration();
 
     return(true);
 
   }else {
     return(false);
   }
-}
-
-void PathPlanning::_calculate_velocity() {
-
-	for (int i = 0; i < 3; i++) {
-		servo_velocity[i] = _TIME_OF_ACCELERATION * servo_acceleration[i];
-	}
 }
