@@ -102,15 +102,15 @@ float PathPlanning::get_position_sample(int servo_id, float sampleTime_milliSec)
 
    float accelerationTravel; 
    float velocityTravel;
-   float decelerationTravel;
-     float sampleTime = sampleTime_milliSec / 1000;
+    float decelerationTravel;
+    float sampleTime = sampleTime_milliSec / 1000;
    
      if(sampleTime <= this->_TIME_OF_ACCELERATION){
           accelerationTravel = 0.5 * (this->servo_acceleration[servo_id] * (sampleTime * sampleTime));
       }else{
           accelerationTravel = 0.5 * (this->servo_acceleration[servo_id] * (this->_TIME_OF_ACCELERATION * this->_TIME_OF_ACCELERATION));
       }
-  
+    
      if(this->constantVelocityTime > 0 && sampleTime <= (this->constantVelocityTime + this->_TIME_OF_ACCELERATION) && sampleTime > this->_TIME_OF_ACCELERATION) {
           velocityTravel = (this->servo_acceleration[servo_id] * this->_TIME_OF_ACCELERATION) * (sampleTime - this->_TIME_OF_ACCELERATION);
      }else if(this->constantVelocityTime > 0 && sampleTime > (this->constantVelocityTime + this->_TIME_OF_ACCELERATION)){
@@ -118,7 +118,7 @@ float PathPlanning::get_position_sample(int servo_id, float sampleTime_milliSec)
      }else{
           velocityTravel = 0;
      }
-  
+    
      if(sampleTime > (this->totalTime - this->_TIME_OF_ACCELERATION)){
           decelerationTravel = 0.5 * ((this->servo_acceleration[servo_id]) * ((sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION)) * (sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION))));
     //}else if(this->constantVelocityTime = 0 && sampleTime > this->_TIME_OF_ACCELERATION){
@@ -132,6 +132,7 @@ float PathPlanning::get_position_sample(int servo_id, float sampleTime_milliSec)
      }else{
           return(this->_servo_current_pos[servo_id] - accelerationTravel - velocityTravel - decelerationTravel);
      }
+     
 }
 
 
@@ -143,13 +144,13 @@ float PathPlanning::get_velocity_sample(int servo_id, float sampleTime_milliSec)
     float sampleTime = sampleTime_milliSec / 1000;
 
     if(sampleTime <= this->_TIME_OF_ACCELERATION){
-          velocity = 0.5 * this->servo_acceleration[servo_id] * sampleTime;
+          velocity = this->servo_acceleration[servo_id] * sampleTime;
           return(velocity);
     }else if(this->constantVelocityTime > 0 && sampleTime <= (this->constantVelocityTime + this->_TIME_OF_ACCELERATION) && sampleTime > this->_TIME_OF_ACCELERATION) {
           velocity = (this->servo_acceleration[servo_id] * this->_TIME_OF_ACCELERATION);
           return(velocity);
     }else if(sampleTime > (this->totalTime - this->_TIME_OF_ACCELERATION) && sampleTime > this->_TIME_OF_ACCELERATION){
-          velocity = (0.5 * this->servo_acceleration[servo_id] * this->_TIME_OF_ACCELERATION) - 0.5 * this->servo_acceleration[servo_id] * (sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION));
+          velocity = (this->servo_acceleration[servo_id] * this->_TIME_OF_ACCELERATION) - this->servo_acceleration[servo_id] * (sampleTime - (this->totalTime - this->_TIME_OF_ACCELERATION));
           return(velocity);
     }
   
@@ -223,11 +224,11 @@ bool PathPlanning::starting_angle_warning(float servo1_current_pos, float servo2
 		// Starting position of servo 1 is safe.
 		if (servo2_current_pos < this->_theta_restricted_servo2[0]) {
 			// Starting position of servo 2 is safe.
-			if (servo2_current_pos > _theta_restricted_servo2[1] && servo3_current_pos > this->_theta_restricted_servo3) {
+			if (servo2_current_pos > _theta_restricted_servo2[1] && servo3_current_pos > _theta_restricted_servo3[0]) {
 				// Starting position of servo 3 is safe.
-				return false;
-			}else {
 				return true;
+			}else {
+				return false;
 			}
 		}else {
 			return false;
@@ -268,12 +269,6 @@ bool PathPlanning::calculate_path(float servo1_current_pos, float servo2_current
 
     this->_calculate_acceleration();
     this->_calculate_deceleration();
-    this->_calculate_acceleration_segment_end_theta();
-    this->_calculate_deceleration_segment_start_theta();
-
-    for (int i = 0; i < 3; i++){
-      Serial.println(_servo_goal_pos[i]);
-    }
 
     return(true);
 
