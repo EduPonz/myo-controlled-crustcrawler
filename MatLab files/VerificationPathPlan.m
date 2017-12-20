@@ -8,12 +8,12 @@ MaxVel = TimeAcc * MaxAcc;
 
 %% Start and End Positions %%
 
-StartSer1 = 60;
-StartSer2 = 90;
-StartSer3 = 30;
+StartSer1 = 55;
+StartSer2 = 70;
+StartSer3 = 110;
 CurrentPos = [StartSer1, StartSer2, StartSer3];
 
-Goal = 2; %1 for "home", 2 for "extended", 3 for "to user" 
+Goal = 1; %1 for "home", 2 for "extended", 3 for "to user" 
 
 if Goal == 1
             GoalPos = [45, 90, 135];
@@ -72,7 +72,7 @@ AccEndPos = [acb1, acb2, acb3];
 [dcb1, dcb2, dcb3] = DecelerationBlendStart(Accelerations, TimeAcc, AccEndPos, VelTime);
 DecStartPos = [dcb1, dcb2, dcb3];
 
-SampleTime =0.5;
+SampleTime =0.8;
 %Get the position of the three servos at the above specified sampling time
 [poss1,poss2,poss3] = SamplePos(Tf, Accelerations, TimeAcc, CurrentPos, VelTime, SampleTime, MaxVel);
 SamplePosition = [poss1,poss2,poss3];
@@ -85,9 +85,9 @@ SampleVelocity = [vels1,vels2,vels3];
 SampleAcceleration = [accs1,accs2,accs3];
 
 close all;
-PlotVelocity(Accelerations, Tf, TimeAcc,SampleTime, SampleVelocity);
+PlotVelocity(Accelerations, Tf, TimeAcc, SampleTime, SampleVelocity);
 PlotPosition (Accelerations, Tf, TimeAcc, CurrentPos, MaxVel, GoalPos, SampleTime, SamplePosition,AccEndPos, DecStartPos);
-PlotAcceleration(Accelerations, Tf, TimeAcc);
+PlotAcceleration(Accelerations, Tf, TimeAcc, SampleTime, SampleAcceleration);
 
 
 %% Functions %%
@@ -194,9 +194,9 @@ figure(1)
 fplot(vel1); hold on;
 fplot(vel2); hold on;
 fplot(vel3); hold on;
-plot(SampleTime, SampleVelocity(1),'r*'); hold on;
-plot(SampleTime, SampleVelocity(2),'r*'); hold on;
-plot(SampleTime, SampleVelocity(3),'r*');
+plot(SampleTime, SampleVelocity(1),'b*'); hold on;
+plot(SampleTime, SampleVelocity(2),'b*'); hold on;
+plot(SampleTime, SampleVelocity(3),'b*');
 xlabel('Time, s');
 hl = ylabel('Angular velocity $\dot{\theta}$, deg / s')
 set(hl, 'Interpreter', 'latex');
@@ -301,7 +301,7 @@ end
   z =  acc(3);
    end
   
-   function PlotAcceleration (Accelerations, Tf, AccTime);
+   function PlotAcceleration (Accelerations, Tf, AccTime, SampleTime, SampleAcceleration)
 
 syms Acc1(t);
 syms Acc2(t);
@@ -314,7 +314,12 @@ Acc3(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(3), AccTime<=t<(Tf - Ac
 figure(3)
 fplot(Acc1); hold on;
 fplot(Acc2); hold on;
-fplot(Acc3);
+fplot(Acc3); hold on;
+
+plot(SampleTime, SampleAcceleration(1),'b*'); hold on;
+plot(SampleTime, SampleAcceleration(2),'b*'); hold on;
+plot(SampleTime, SampleAcceleration(3),'b*'); 
+
 xlabel('Time, s')
 hl = ylabel('Acceleration $\ddot{\theta}$, $deg/s^2$')
 set(hl, 'Interpreter', 'latex');
