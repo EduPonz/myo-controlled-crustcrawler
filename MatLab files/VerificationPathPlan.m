@@ -51,7 +51,7 @@ end
 PrimeJointDelta = DominantJointDelta(CurrentPos, GoalPos);
 
 %Calculates the total time for all movements
-Tf = timeTotal(PrimeJointDelta, TimeAcc, MaxAcc)
+Tf = timeTotal(PrimeJointDelta, TimeAcc, MaxAcc);
 
 %Calculates the time for keeping constant velocity for all movements
 VelTime = TimeConstantVel(Tf, TimeAcc);
@@ -73,6 +73,7 @@ AccEndPos = [acb1, acb2, acb3];
 DecStartPos = [dcb1, dcb2, dcb3];
 
 SampleTime =0.8;
+
 %Get the position of the three servos at the above specified sampling time
 [poss1,poss2,poss3] = SamplePos(Tf, Accelerations, TimeAcc, CurrentPos, VelTime, SampleTime, MaxVel);
 SamplePosition = [poss1,poss2,poss3];
@@ -81,8 +82,12 @@ SamplePosition = [poss1,poss2,poss3];
 [vels1,vels2,vels3] = SampleVel(Tf, Accelerations, TimeAcc, VelTime, SampleTime);
 SampleVelocity = [vels1,vels2,vels3];
 
+%Get the acceleration of the three servos at the above specified sampling time
 [accs1,accs2,accs3] = SampleAcc( Accelerations, TimeAcc, VelTime, SampleTime);
 SampleAcceleration = [accs1,accs2,accs3];
+
+%Plot the movements, the sampling position, velocity and acceleration and
+%the borders between the parabolic blends and the linear segment
 
 close all;
 PlotVelocity(Accelerations, Tf, TimeAcc, SampleTime, SampleVelocity);
@@ -180,7 +185,33 @@ function [x,y,z] = DecelerationBlendStart(Accelerations, TimeAcc, AccEndPos, Vel
     z = Position(3);
 end
 
-%Calculate and plot velocity as a function of time
+%Calculate and plot acceleration as a function of time, as well as sample acceleration
+function PlotAcceleration (Accelerations, Tf, AccTime, SampleTime, SampleAcceleration)
+syms Acc1(t);
+syms Acc2(t);
+syms Acc3(t);
+
+Acc1(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(1), AccTime<=t<(Tf - AccTime), 0, (Tf - AccTime)<=t<Tf, -Accelerations(1), t>=Tf , 0);
+Acc2(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(2), AccTime<=t<(Tf - AccTime), 0, (Tf - AccTime)<=t<Tf, -Accelerations(2), t>=Tf , 0);
+Acc3(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(3), AccTime<=t<(Tf - AccTime), 0, (Tf - AccTime)<=t<Tf, -Accelerations(3), t>=Tf , 0);
+
+figure(3)
+fplot(Acc1); hold on;
+fplot(Acc2); hold on;
+fplot(Acc3); hold on;
+
+plot(SampleTime, SampleAcceleration(1),'b*'); hold on;
+plot(SampleTime, SampleAcceleration(2),'b*'); hold on;
+plot(SampleTime, SampleAcceleration(3),'b*'); 
+
+xlabel('Time, s')
+hl = ylabel('Acceleration $\ddot{\theta}$, $deg/s^2$')
+set(hl, 'Interpreter', 'latex');
+axis([0 Tf -150 150])
+end
+
+%Calculate and plot velocity as a function of time, as well as sample velocity
+
 function PlotVelocity(Accelerations, Tf, AccTime,SampleTime, SampleVelocity)
 
 syms vel1(t);
@@ -198,11 +229,12 @@ plot(SampleTime, SampleVelocity(1),'b*'); hold on;
 plot(SampleTime, SampleVelocity(2),'b*'); hold on;
 plot(SampleTime, SampleVelocity(3),'b*');
 xlabel('Time, s');
-hl = ylabel('Angular velocity $\dot{\theta}$, deg / s')
+hl = ylabel('Angular velocity $\dot{\theta}$, deg / s');
 set(hl, 'Interpreter', 'latex');
 axis([0 Tf -60 60])
 end
 
+%%Calculate and plot position as a function of time, as well as sample position and linear segment borders
 function PlotPosition (Accelerations, Tf, AccTime, CurrentPos, MaxVel, GoalPos, SampleTime, SamplePosition, AccEndBlend, DecStartBlend)
 
 syms theta1(t);
@@ -233,15 +265,16 @@ ylabel('Position \theta, deg')
 axis([0 Tf 0 135])
 end
 
+%Calculate the position at a specific sample time
 function [x,y,z] = SamplePos(Tf, Accelerations, TimeAcc, CurrentPos, VelTime, SampleTime, MaxVel)
    AccS =[0,0,0];
    VelS =[0,0,0];
    DecS =[0,0,0];
-   Sampos = [0,0,0];
+   sampos = [0,0,0];
        
     for n = 1:3
        if SampleTime <= TimeAcc
-          AccS(n) =1/2*Accelerations(n)*SampleTime*SampleTime
+          AccS(n) =1/2*Accelerations(n)*SampleTime*SampleTime;
        else 
           AccS(n) = 1/2*Accelerations(n)*TimeAcc*TimeAcc;
        end
@@ -269,6 +302,7 @@ y = sampos(2);
 z = sampos(3);
 end
 
+%Calculate the velocity at a specific sample time
   function [x,y,z] = SampleVel(Tf, Accelerations, TimeAcc, VelTime, SampleTime)    
   vel = [0,0,0];
   for n = 1:3
@@ -285,7 +319,8 @@ end
   z =  vel(3);
   end
   
-   function [x,y,z] = SampleAcc(Accelerations, TimeAcc, VelTime, SampleTime)    
+  %Calculate the acceleration at a specific sample time
+  function [x,y,z] = SampleAcc(Accelerations, TimeAcc, VelTime, SampleTime)    
   acc = [0,0,0];
   for n = 1:3
      if SampleTime <= TimeAcc
@@ -301,27 +336,3 @@ end
   z =  acc(3);
    end
   
-   function PlotAcceleration (Accelerations, Tf, AccTime, SampleTime, SampleAcceleration)
-
-syms Acc1(t);
-syms Acc2(t);
-syms Acc3(t);
-
-Acc1(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(1), AccTime<=t<(Tf - AccTime), 0, (Tf - AccTime)<=t<Tf, -Accelerations(1), t>=Tf , 0);
-Acc2(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(2), AccTime<=t<(Tf - AccTime), 0, (Tf - AccTime)<=t<Tf, -Accelerations(2), t>=Tf , 0);
-Acc3(t) = piecewise(t<0, 0, 0<= t<AccTime, Accelerations(3), AccTime<=t<(Tf - AccTime), 0, (Tf - AccTime)<=t<Tf, -Accelerations(3), t>=Tf , 0);
-
-figure(3)
-fplot(Acc1); hold on;
-fplot(Acc2); hold on;
-fplot(Acc3); hold on;
-
-plot(SampleTime, SampleAcceleration(1),'b*'); hold on;
-plot(SampleTime, SampleAcceleration(2),'b*'); hold on;
-plot(SampleTime, SampleAcceleration(3),'b*'); 
-
-xlabel('Time, s')
-hl = ylabel('Acceleration $\ddot{\theta}$, $deg/s^2$')
-set(hl, 'Interpreter', 'latex');
-axis([0 Tf -150 150])
-end
