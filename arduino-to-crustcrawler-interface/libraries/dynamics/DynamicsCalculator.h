@@ -28,12 +28,12 @@ public:
 private:
 	const float _PI = 3.1415927;
 	const float _g = -9.82;
-	const float _c [3] = {1,1,1};
-	const float _m [3] = {1,1,1};
-	const float _L [3] = {1,1,1};
-	const float _I_1 [3] = {1,2,3};
-	const float _I_2 [3] = {1,2,3};
-	const float _I_3 [3] = {1,2,3};
+	const float _c [3] = {0.0254,0.1099,0.0939};
+	const float _m [3] = {0.15,0.23,0.31};
+	const float _L [3] = {0.0508,0.2197,0.1877};
+	const float _I_1 [3] = {0.0000323,0.0000323,0.00003};
+	const float _I_2 [3] = {0.000046,0.000925,0.000925};
+	const float _I_3 [3] = {0.000062,0.000910,0.000910};
 	float _theta [3];
 	float _omega [3];
 	float _alpha [3];
