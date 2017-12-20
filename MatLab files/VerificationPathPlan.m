@@ -1,14 +1,5 @@
 %%%%%% Script %%%%%%
 
-%% Setup %%
-
-syms theta1(t);
-syms theta2(t);
-syms theta3(t);
-syms vel1(t);
-syms vel2(t);
-syms vel3(t);
-
 %% Movement parameters %%
 
 TimeAcc = 0.25; %time for acceleration
